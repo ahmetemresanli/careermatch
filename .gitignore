@@ -1,0 +1,38 @@
+# IntelliJ IDEA
+.idea/
+**/.idea/
+*.iml
+*.iws
+*.ipr
+
+# Maven
+**/target/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+
+# Environment / Secrets
+.env
+.env.*
+!.env.example
+
+# Local Spring configuration
+backend/src/main/resources/application-local.properties
+backend/src/main/resources/application-local.yml
+
+# Uploads
+backend/uploads/
+uploads/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
