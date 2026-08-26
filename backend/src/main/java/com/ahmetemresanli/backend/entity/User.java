@@ -1,6 +1,7 @@
 package com.ahmetemresanli.backend.entity;
 
 import com.ahmetemresanli.backend.enums.UserRole;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -40,6 +41,13 @@ public class User {
 
     @Column(nullable = false)
     private boolean active = true;
+
+    @OneToOne(
+            mappedBy = "user",
+            fetch = FetchType.LAZY
+    )
+    @JsonIgnore
+    private CandidateProfile candidateProfile;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
