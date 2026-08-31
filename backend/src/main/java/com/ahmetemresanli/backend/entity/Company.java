@@ -58,6 +58,10 @@ public class Company {
     @JsonIgnore
     private List<CompanyMember> members = new ArrayList<>();
 
+    @OneToMany(mappedBy = "company")
+    @JsonIgnore
+    private List<JobPosting> jobPostings = new ArrayList<>();
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

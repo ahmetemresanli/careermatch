@@ -35,6 +35,10 @@ public class Skill {
     @JsonIgnore
     private List<CandidateSkill> candidateSkills = new ArrayList<>();
 
+    @OneToMany(mappedBy = "skill")
+    @JsonIgnore
+    private List<JobSkill> jobSkills = new ArrayList<>();
+
     @CreationTimestamp
     @Column(
             name = "created_at",
