@@ -2,6 +2,7 @@ package com.ahmetemresanli.backend.entity;
 
 import com.ahmetemresanli.backend.enums.JobSearchStatus;
 import com.ahmetemresanli.backend.enums.WorkModel;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,6 +11,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Data
@@ -69,6 +72,10 @@ public class CandidateProfile {
     @Enumerated(EnumType.STRING)
     @Column(name = "preferred_work_model", length = 20)
     private WorkModel preferredWorkModel;
+
+    @OneToMany(mappedBy = "candidateProfile")
+    @JsonIgnore
+    private List<CandidateSkill> candidateSkills = new ArrayList<>();
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
