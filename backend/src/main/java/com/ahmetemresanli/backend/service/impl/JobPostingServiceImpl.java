@@ -2,11 +2,20 @@ package com.ahmetemresanli.backend.service.impl;
 
 import com.ahmetemresanli.backend.entity.Company;
 import com.ahmetemresanli.backend.entity.JobPosting;
+import com.ahmetemresanli.backend.enums.EmploymentType;
+import com.ahmetemresanli.backend.enums.JobLevel;
+import com.ahmetemresanli.backend.enums.WorkModel;
 import com.ahmetemresanli.backend.repository.CompanyRepository;
 import com.ahmetemresanli.backend.repository.JobPostingRepository;
 import com.ahmetemresanli.backend.service.IJobPostingService;
+import com.ahmetemresanli.backend.specification.JobPostingSpecification;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -151,5 +160,45 @@ public class JobPostingServiceImpl implements IJobPostingService {
     public List<JobPosting> getAllJobPostings() {
 
         return jobPostingRepository.findAll();
+    }
+
+    @Override
+    public Page<JobPosting> searchJobPostings(
+            String keyword,
+            String city,
+            WorkModel workModel,
+            EmploymentType employmentType,
+            JobLevel jobLevel,
+            BigDecimal minimumSalary,
+            int page,
+            int size,
+            String sortBy,
+            String sortDirection
+    ) {
+
+        Sort.Direction direction =
+                sortDirection.equalsIgnoreCase("desc")
+                        ? Sort.Direction.DESC
+                        : Sort.Direction.ASC;
+
+        Sort sort = Sort.by(direction, sortBy);
+
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                sort
+        );
+
+        return jobPostingRepository.findAll(
+                JobPostingSpecification.filter(
+                        keyword,
+                        city,
+                        workModel,
+                        employmentType,
+                        jobLevel,
+                        minimumSalary
+                ),
+                pageable
+        );
     }
 }
