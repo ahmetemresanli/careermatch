@@ -77,6 +77,14 @@ public class CandidateProfile {
     @JsonIgnore
     private List<CandidateSkill> candidateSkills = new ArrayList<>();
 
+    @OneToMany(mappedBy = "candidateProfile")
+    @JsonIgnore
+    private List<Resume> resumes = new ArrayList<>();
+
+    @OneToMany(mappedBy = "candidateProfile")
+    @JsonIgnore
+    private List<Application> applications = new ArrayList<>();
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
