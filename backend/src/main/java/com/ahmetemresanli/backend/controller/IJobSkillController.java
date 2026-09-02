@@ -1,27 +1,30 @@
 package com.ahmetemresanli.backend.controller;
 
-import com.ahmetemresanli.backend.entity.JobSkill;
-import com.ahmetemresanli.backend.enums.SkillLevel;
+import com.ahmetemresanli.backend.dto.request.JobSkillCreateRequest;
+import com.ahmetemresanli.backend.dto.response.JobSkillResponse;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
 public interface IJobSkillController {
 
-    ResponseEntity<JobSkill> addSkillToJobPosting(
+    ResponseEntity<JobSkillResponse> addSkillToJobPosting(
             Long jobPostingId,
             Long skillId,
-            SkillLevel requiredSkillLevel,
-            boolean required
+            JobSkillCreateRequest request
     );
 
-    ResponseEntity<JobSkill> getJobSkillById(Long id);
+    ResponseEntity<JobSkillResponse> getJobSkillById(
+            Long id
+    );
 
-    ResponseEntity<List<JobSkill>> getSkillsByJobPostingId(
+    ResponseEntity<List<JobSkillResponse>>
+    getSkillsByJobPostingId(
             Long jobPostingId
     );
 
-    ResponseEntity<List<JobSkill>> getJobPostingsBySkillId(
+    ResponseEntity<List<JobSkillResponse>>
+    getJobPostingsBySkillId(
             Long skillId
     );
 }

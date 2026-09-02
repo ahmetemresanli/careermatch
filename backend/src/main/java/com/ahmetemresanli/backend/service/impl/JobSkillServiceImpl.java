@@ -4,6 +4,9 @@ import com.ahmetemresanli.backend.entity.JobPosting;
 import com.ahmetemresanli.backend.entity.JobSkill;
 import com.ahmetemresanli.backend.entity.Skill;
 import com.ahmetemresanli.backend.enums.SkillLevel;
+import com.ahmetemresanli.backend.exception.BusinessException;
+import com.ahmetemresanli.backend.exception.DuplicateResourceException;
+import com.ahmetemresanli.backend.exception.ResourceNotFoundException;
 import com.ahmetemresanli.backend.repository.JobPostingRepository;
 import com.ahmetemresanli.backend.repository.JobSkillRepository;
 import com.ahmetemresanli.backend.repository.SkillRepository;
@@ -40,14 +43,14 @@ public class JobSkillServiceImpl implements IJobSkillService {
         JobPosting jobPosting =
                 jobPostingRepository.findById(jobPostingId)
                         .orElseThrow(() ->
-                                new IllegalArgumentException(
+                                new ResourceNotFoundException(
                                         "Job posting not found"
                                 )
                         );
 
         Skill skill = skillRepository.findById(skillId)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
+                        new ResourceNotFoundException(
                                 "Skill not found"
                         )
                 );
@@ -58,13 +61,13 @@ public class JobSkillServiceImpl implements IJobSkillService {
                         skillId
                 )) {
 
-            throw new IllegalArgumentException(
+            throw new DuplicateResourceException(
                     "Job posting already has this skill"
             );
         }
 
         if (requiredSkillLevel == null) {
-            throw new IllegalArgumentException(
+            throw new BusinessException(
                     "Required skill level cannot be empty"
             );
         }
@@ -84,7 +87,7 @@ public class JobSkillServiceImpl implements IJobSkillService {
 
         return jobSkillRepository.findById(id)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
+                        new ResourceNotFoundException(
                                 "Job skill not found"
                         )
                 );

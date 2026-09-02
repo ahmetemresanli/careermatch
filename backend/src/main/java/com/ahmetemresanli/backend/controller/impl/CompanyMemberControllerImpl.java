@@ -1,9 +1,12 @@
 package com.ahmetemresanli.backend.controller.impl;
 
 import com.ahmetemresanli.backend.controller.ICompanyMemberController;
+import com.ahmetemresanli.backend.dto.request.CompanyMemberCreateRequest;
+import com.ahmetemresanli.backend.dto.response.CompanyMemberResponse;
 import com.ahmetemresanli.backend.entity.CompanyMember;
-import com.ahmetemresanli.backend.enums.CompanyMemberRole;
+import com.ahmetemresanli.backend.mapper.CompanyMemberMapper;
 import com.ahmetemresanli.backend.service.ICompanyMemberService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,50 +15,89 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/company-members")
-public class CompanyMemberControllerImpl implements ICompanyMemberController {
+public class CompanyMemberControllerImpl
+        implements ICompanyMemberController {
 
     private final ICompanyMemberService companyMemberService;
 
-    public CompanyMemberControllerImpl(ICompanyMemberService companyMemberService) {
+    public CompanyMemberControllerImpl(
+            ICompanyMemberService companyMemberService
+    ) {
         this.companyMemberService = companyMemberService;
     }
 
     @Override
-    @PostMapping("/user/{userId}/company/{companyId}")
-    public ResponseEntity<CompanyMember> addMember(
+    @PostMapping("/company/{companyId}/user/{userId}")
+    public ResponseEntity<CompanyMemberResponse> addMember(
             @PathVariable Long userId,
             @PathVariable Long companyId,
-            @RequestParam CompanyMemberRole memberRole) {
+            @Valid @RequestBody CompanyMemberCreateRequest request
+    ) {
 
-        CompanyMember companyMember = companyMemberService.addMember(userId, companyId, memberRole);
+        CompanyMember companyMember =
+                companyMemberService.addMember(
+                        userId,
+                        companyId,
+                        request.getMemberRole()
+                );
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(companyMember);
+        CompanyMemberResponse response =
+                CompanyMemberMapper.toResponse(companyMember);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
     }
 
     @Override
     @GetMapping("/{id}")
-    public ResponseEntity<CompanyMember> getCompanyMemberById(@PathVariable Long id) {
+    public ResponseEntity<CompanyMemberResponse>
+    getCompanyMemberById(
+            @PathVariable Long id
+    ) {
 
-        CompanyMember companyMember = companyMemberService.getCompanyMemberById(id);
+        CompanyMember companyMember =
+                companyMemberService
+                        .getCompanyMemberById(id);
 
-        return ResponseEntity.ok(companyMember);
+        return ResponseEntity.ok(
+                CompanyMemberMapper.toResponse(
+                        companyMember
+                )
+        );
     }
 
     @Override
     @GetMapping("/company/{companyId}")
-    public ResponseEntity<List<CompanyMember>> getMembersByCompanyId(@PathVariable Long companyId) {
+    public ResponseEntity<List<CompanyMemberResponse>>
+    getMembersByCompanyId(
+            @PathVariable Long companyId
+    ) {
 
-        List<CompanyMember> members = companyMemberService.getMembersByCompanyId(companyId);
+        List<CompanyMemberResponse> responses =
+                companyMemberService
+                        .getMembersByCompanyId(companyId)
+                        .stream()
+                        .map(CompanyMemberMapper::toResponse)
+                        .toList();
 
-        return ResponseEntity.ok(members);
+        return ResponseEntity.ok(responses);
     }
 
     @Override
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<CompanyMember>> getMembershipsByUserId(@PathVariable Long userId) {
+    public ResponseEntity<List<CompanyMemberResponse>>
+    getMembershipsByUserId(
+            @PathVariable Long userId
+    ) {
 
-        List<CompanyMember> memberships = companyMemberService.getMembershipsByUserId(userId);
+        List<CompanyMemberResponse> responses =
+                companyMemberService
+                        .getMembershipsByUserId(userId)
+                        .stream()
+                        .map(CompanyMemberMapper::toResponse)
+                        .toList();
 
-        return ResponseEntity.ok(memberships);
+        return ResponseEntity.ok(responses);
     }
 }

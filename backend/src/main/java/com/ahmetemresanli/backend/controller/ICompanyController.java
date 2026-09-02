@@ -1,17 +1,24 @@
 package com.ahmetemresanli.backend.controller;
 
-import com.ahmetemresanli.backend.entity.Company;
+import com.ahmetemresanli.backend.dto.request.CompanyCreateRequest;
+import com.ahmetemresanli.backend.dto.response.CompanyResponse;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
 public interface ICompanyController {
 
-    ResponseEntity<Company> createCompany(Company company);
+    ResponseEntity<CompanyResponse> createCompany(
+            CompanyCreateRequest request
+    );
 
-    ResponseEntity<Company> getCompanyById(Long id);
+    ResponseEntity<CompanyResponse> getCompanyById(
+            Long id
+    );
 
-    ResponseEntity<Company> getCompanyByDomain(String domain);
+    ResponseEntity<CompanyResponse> getCompanyByDomain(
+            String domain
+    );
 
-    ResponseEntity<List<Company>> getAllCompanies();
+    ResponseEntity<List<CompanyResponse>> getAllCompanies();
 }

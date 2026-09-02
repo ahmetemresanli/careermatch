@@ -1,6 +1,8 @@
 package com.ahmetemresanli.backend.controller;
 
-import com.ahmetemresanli.backend.entity.Application;
+import com.ahmetemresanli.backend.dto.request.ApplicationCreateRequest;
+import com.ahmetemresanli.backend.dto.request.ApplicationStatusUpdateRequest;
+import com.ahmetemresanli.backend.dto.response.ApplicationResponse;
 import com.ahmetemresanli.backend.enums.ApplicationStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -8,35 +10,34 @@ import java.util.List;
 
 public interface IApplicationController {
 
-    ResponseEntity<Application> applyToJob(
+    ResponseEntity<ApplicationResponse> applyToJob(
             Long candidateProfileId,
             Long jobPostingId,
-            Long resumeId,
-            String coverLetter
+            ApplicationCreateRequest request
     );
 
-    ResponseEntity<Application> getApplicationById(
+    ResponseEntity<ApplicationResponse> getApplicationById(
             Long id
     );
 
-    ResponseEntity<List<Application>>
+    ResponseEntity<List<ApplicationResponse>>
     getApplicationsByCandidateProfileId(
             Long candidateProfileId
     );
 
-    ResponseEntity<List<Application>>
+    ResponseEntity<List<ApplicationResponse>>
     getApplicationsByJobPostingId(
             Long jobPostingId
     );
 
-    ResponseEntity<List<Application>>
+    ResponseEntity<List<ApplicationResponse>>
     getApplicationsByJobPostingIdAndStatus(
             Long jobPostingId,
             ApplicationStatus status
     );
 
-    ResponseEntity<Application> updateApplicationStatus(
+    ResponseEntity<ApplicationResponse> updateApplicationStatus(
             Long applicationId,
-            ApplicationStatus status
+            ApplicationStatusUpdateRequest request
     );
 }

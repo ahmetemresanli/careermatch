@@ -1,8 +1,12 @@
 package com.ahmetemresanli.backend.controller.impl;
 
 import com.ahmetemresanli.backend.controller.IResumeController;
+import com.ahmetemresanli.backend.dto.request.ResumeCreateRequest;
+import com.ahmetemresanli.backend.dto.response.ResumeResponse;
 import com.ahmetemresanli.backend.entity.Resume;
+import com.ahmetemresanli.backend.mapper.ResumeMapper;
 import com.ahmetemresanli.backend.service.IResumeService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,10 +28,13 @@ public class ResumeControllerImpl
 
     @Override
     @PostMapping("/candidate/{candidateProfileId}")
-    public ResponseEntity<Resume> createResume(
+    public ResponseEntity<ResumeResponse> createResume(
             @PathVariable Long candidateProfileId,
-            @RequestBody Resume resume
+            @Valid @RequestBody ResumeCreateRequest request
     ) {
+
+        Resume resume =
+                ResumeMapper.toEntity(request);
 
         Resume createdResume =
                 resumeService.createResume(
@@ -35,49 +42,62 @@ public class ResumeControllerImpl
                         resume
                 );
 
+        ResumeResponse response =
+                ResumeMapper.toResponse(createdResume);
+
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(createdResume);
+                .body(response);
     }
 
     @Override
     @GetMapping("/{id}")
-    public ResponseEntity<Resume> getResumeById(
+    public ResponseEntity<ResumeResponse> getResumeById(
             @PathVariable Long id
     ) {
 
+        Resume resume =
+                resumeService.getResumeById(id);
+
         return ResponseEntity.ok(
-                resumeService.getResumeById(id)
+                ResumeMapper.toResponse(resume)
         );
     }
 
     @Override
     @GetMapping("/candidate/{candidateProfileId}")
-    public ResponseEntity<List<Resume>>
+    public ResponseEntity<List<ResumeResponse>>
     getResumesByCandidateProfileId(
             @PathVariable Long candidateProfileId
     ) {
 
-        return ResponseEntity.ok(
+        List<ResumeResponse> responses =
                 resumeService
                         .getResumesByCandidateProfileId(
                                 candidateProfileId
                         )
-        );
+                        .stream()
+                        .map(ResumeMapper::toResponse)
+                        .toList();
+
+        return ResponseEntity.ok(responses);
     }
 
     @Override
     @PutMapping("/{resumeId}/default")
-    public ResponseEntity<Resume> setDefaultResume(
+    public ResponseEntity<ResumeResponse> setDefaultResume(
             @RequestParam Long candidateProfileId,
             @PathVariable Long resumeId
     ) {
 
-        return ResponseEntity.ok(
+        Resume resume =
                 resumeService.setDefaultResume(
                         candidateProfileId,
                         resumeId
-                )
+                );
+
+        return ResponseEntity.ok(
+                ResumeMapper.toResponse(resume)
         );
     }
 }

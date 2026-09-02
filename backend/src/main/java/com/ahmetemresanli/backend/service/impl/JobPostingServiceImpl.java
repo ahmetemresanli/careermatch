@@ -5,15 +5,18 @@ import com.ahmetemresanli.backend.entity.JobPosting;
 import com.ahmetemresanli.backend.enums.EmploymentType;
 import com.ahmetemresanli.backend.enums.JobLevel;
 import com.ahmetemresanli.backend.enums.WorkModel;
+import com.ahmetemresanli.backend.exception.BusinessException;
+import com.ahmetemresanli.backend.exception.ResourceNotFoundException;
 import com.ahmetemresanli.backend.repository.CompanyRepository;
 import com.ahmetemresanli.backend.repository.JobPostingRepository;
 import com.ahmetemresanli.backend.service.IJobPostingService;
 import com.ahmetemresanli.backend.specification.JobPostingSpecification;
-import org.springframework.stereotype.Service;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -41,7 +44,7 @@ public class JobPostingServiceImpl implements IJobPostingService {
 
         Company company = companyRepository.findById(companyId)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
+                        new ResourceNotFoundException(
                                 "Company not found"
                         )
                 );
@@ -49,7 +52,7 @@ public class JobPostingServiceImpl implements IJobPostingService {
         if (jobPosting.getTitle() == null
                 || jobPosting.getTitle().isBlank()) {
 
-            throw new IllegalArgumentException(
+            throw new BusinessException(
                     "Job title cannot be empty"
             );
         }
@@ -57,25 +60,28 @@ public class JobPostingServiceImpl implements IJobPostingService {
         if (jobPosting.getDescription() == null
                 || jobPosting.getDescription().isBlank()) {
 
-            throw new IllegalArgumentException(
+            throw new BusinessException(
                     "Job description cannot be empty"
             );
         }
 
         if (jobPosting.getEmploymentType() == null) {
-            throw new IllegalArgumentException(
+
+            throw new BusinessException(
                     "Employment type cannot be empty"
             );
         }
 
         if (jobPosting.getWorkModel() == null) {
-            throw new IllegalArgumentException(
+
+            throw new BusinessException(
                     "Work model cannot be empty"
             );
         }
 
         if (jobPosting.getJobLevel() == null) {
-            throw new IllegalArgumentException(
+
+            throw new BusinessException(
                     "Job level cannot be empty"
             );
         }
@@ -83,7 +89,7 @@ public class JobPostingServiceImpl implements IJobPostingService {
         if (jobPosting.getMinimumExperienceYears() != null
                 && jobPosting.getMinimumExperienceYears() < 0) {
 
-            throw new IllegalArgumentException(
+            throw new BusinessException(
                     "Minimum experience years cannot be negative"
             );
         }
@@ -91,7 +97,7 @@ public class JobPostingServiceImpl implements IJobPostingService {
         if (jobPosting.getMinimumSalary() != null
                 && jobPosting.getMinimumSalary().signum() < 0) {
 
-            throw new IllegalArgumentException(
+            throw new BusinessException(
                     "Minimum salary cannot be negative"
             );
         }
@@ -99,7 +105,7 @@ public class JobPostingServiceImpl implements IJobPostingService {
         if (jobPosting.getMaximumSalary() != null
                 && jobPosting.getMaximumSalary().signum() < 0) {
 
-            throw new IllegalArgumentException(
+            throw new BusinessException(
                     "Maximum salary cannot be negative"
             );
         }
@@ -109,7 +115,7 @@ public class JobPostingServiceImpl implements IJobPostingService {
                 && jobPosting.getMinimumSalary()
                 .compareTo(jobPosting.getMaximumSalary()) > 0) {
 
-            throw new IllegalArgumentException(
+            throw new BusinessException(
                     "Minimum salary cannot be greater than maximum salary"
             );
         }
@@ -118,7 +124,7 @@ public class JobPostingServiceImpl implements IJobPostingService {
                 && jobPosting.getApplicationDeadline()
                 .isBefore(LocalDateTime.now())) {
 
-            throw new IllegalArgumentException(
+            throw new BusinessException(
                     "Application deadline cannot be in the past"
             );
         }
@@ -141,7 +147,7 @@ public class JobPostingServiceImpl implements IJobPostingService {
 
         return jobPostingRepository.findById(id)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
+                        new ResourceNotFoundException(
                                 "Job posting not found"
                         )
                 );

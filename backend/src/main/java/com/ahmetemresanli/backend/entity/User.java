@@ -3,8 +3,9 @@ package com.ahmetemresanli.backend.entity;
 import com.ahmetemresanli.backend.enums.UserRole;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -14,7 +15,8 @@ import java.util.List;
 
 @Entity
 @Table(name = "users")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 public class User {
 
@@ -28,8 +30,8 @@ public class User {
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
-    @Column(name = "recovery_mail", length = 255)
-    private String recoveryMail;
+    @Column(name = "recovery_email", length = 255)
+    private String recoveryEmail;
 
     @Column(name = "email_verified", nullable = false)
     private boolean emailVerified = false;

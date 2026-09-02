@@ -1,9 +1,14 @@
 package com.ahmetemresanli.backend.controller.impl;
 
 import com.ahmetemresanli.backend.controller.IApplicationController;
+import com.ahmetemresanli.backend.dto.request.ApplicationCreateRequest;
+import com.ahmetemresanli.backend.dto.request.ApplicationStatusUpdateRequest;
+import com.ahmetemresanli.backend.dto.response.ApplicationResponse;
 import com.ahmetemresanli.backend.entity.Application;
 import com.ahmetemresanli.backend.enums.ApplicationStatus;
+import com.ahmetemresanli.backend.mapper.ApplicationMapper;
 import com.ahmetemresanli.backend.service.IApplicationService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,100 +29,123 @@ public class ApplicationControllerImpl
     }
 
     @Override
-    @PostMapping
-    public ResponseEntity<Application> applyToJob(
-            @RequestParam Long candidateProfileId,
-            @RequestParam Long jobPostingId,
-            @RequestParam(required = false) Long resumeId,
-            @RequestParam(required = false) String coverLetter
+    @PostMapping(
+            "/candidate/{candidateProfileId}/job/{jobPostingId}"
+    )
+    public ResponseEntity<ApplicationResponse> applyToJob(
+            @PathVariable Long candidateProfileId,
+            @PathVariable Long jobPostingId,
+            @Valid @RequestBody ApplicationCreateRequest request
     ) {
 
         Application application =
                 applicationService.applyToJob(
                         candidateProfileId,
                         jobPostingId,
-                        resumeId,
-                        coverLetter
+                        request.getResumeId(),
+                        request.getCoverLetter()
                 );
+
+        ApplicationResponse response =
+                ApplicationMapper.toResponse(application);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(application);
+                .body(response);
     }
 
     @Override
     @GetMapping("/{id}")
-    public ResponseEntity<Application> getApplicationById(
+    public ResponseEntity<ApplicationResponse>
+    getApplicationById(
             @PathVariable Long id
     ) {
 
+        Application application =
+                applicationService.getApplicationById(id);
+
         return ResponseEntity.ok(
-                applicationService
-                        .getApplicationById(id)
+                ApplicationMapper.toResponse(application)
         );
     }
 
     @Override
     @GetMapping("/candidate/{candidateProfileId}")
-    public ResponseEntity<List<Application>>
+    public ResponseEntity<List<ApplicationResponse>>
     getApplicationsByCandidateProfileId(
             @PathVariable Long candidateProfileId
     ) {
 
-        return ResponseEntity.ok(
+        List<ApplicationResponse> responses =
                 applicationService
                         .getApplicationsByCandidateProfileId(
                                 candidateProfileId
                         )
-        );
+                        .stream()
+                        .map(ApplicationMapper::toResponse)
+                        .toList();
+
+        return ResponseEntity.ok(responses);
     }
 
     @Override
     @GetMapping("/job/{jobPostingId}")
-    public ResponseEntity<List<Application>>
+    public ResponseEntity<List<ApplicationResponse>>
     getApplicationsByJobPostingId(
             @PathVariable Long jobPostingId
     ) {
 
-        return ResponseEntity.ok(
+        List<ApplicationResponse> responses =
                 applicationService
                         .getApplicationsByJobPostingId(
                                 jobPostingId
                         )
-        );
+                        .stream()
+                        .map(ApplicationMapper::toResponse)
+                        .toList();
+
+        return ResponseEntity.ok(responses);
     }
 
     @Override
     @GetMapping("/job/{jobPostingId}/status")
-    public ResponseEntity<List<Application>>
+    public ResponseEntity<List<ApplicationResponse>>
     getApplicationsByJobPostingIdAndStatus(
             @PathVariable Long jobPostingId,
             @RequestParam ApplicationStatus status
     ) {
 
-        return ResponseEntity.ok(
+        List<ApplicationResponse> responses =
                 applicationService
                         .getApplicationsByJobPostingIdAndStatus(
                                 jobPostingId,
                                 status
                         )
-        );
+                        .stream()
+                        .map(ApplicationMapper::toResponse)
+                        .toList();
+
+        return ResponseEntity.ok(responses);
     }
 
     @Override
     @PutMapping("/{applicationId}/status")
-    public ResponseEntity<Application>
+    public ResponseEntity<ApplicationResponse>
     updateApplicationStatus(
             @PathVariable Long applicationId,
-            @RequestParam ApplicationStatus status
+            @Valid @RequestBody
+            ApplicationStatusUpdateRequest request
     ) {
 
-        return ResponseEntity.ok(
+        Application application =
                 applicationService
                         .updateApplicationStatus(
                                 applicationId,
-                                status
-                        )
+                                request.getStatus()
+                        );
+
+        return ResponseEntity.ok(
+                ApplicationMapper.toResponse(application)
         );
     }
 }

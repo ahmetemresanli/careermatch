@@ -1,15 +1,20 @@
 package com.ahmetemresanli.backend.controller;
 
-import com.ahmetemresanli.backend.entity.User;
+import com.ahmetemresanli.backend.dto.request.UserCreateRequest;
+import com.ahmetemresanli.backend.dto.response.UserResponse;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
 public interface IUserController {
 
-    ResponseEntity<User> createUser(User user);
+    ResponseEntity<UserResponse> createUser(
+            UserCreateRequest request
+    );
 
-    ResponseEntity<User> getUserById(Long id);
+    ResponseEntity<UserResponse> getUserById(
+            Long id
+    );
 
-    ResponseEntity<List<User>> getAllUsers();
+    ResponseEntity<List<UserResponse>> getAllUsers();
 }

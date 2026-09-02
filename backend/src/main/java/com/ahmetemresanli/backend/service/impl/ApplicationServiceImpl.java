@@ -6,6 +6,9 @@ import com.ahmetemresanli.backend.entity.JobPosting;
 import com.ahmetemresanli.backend.entity.Resume;
 import com.ahmetemresanli.backend.enums.ApplicationStatus;
 import com.ahmetemresanli.backend.enums.JobStatus;
+import com.ahmetemresanli.backend.exception.BusinessException;
+import com.ahmetemresanli.backend.exception.DuplicateResourceException;
+import com.ahmetemresanli.backend.exception.ResourceNotFoundException;
 import com.ahmetemresanli.backend.repository.ApplicationRepository;
 import com.ahmetemresanli.backend.repository.CandidateProfileRepository;
 import com.ahmetemresanli.backend.repository.JobPostingRepository;
@@ -49,7 +52,7 @@ public class ApplicationServiceImpl
                 candidateProfileRepository
                         .findById(candidateProfileId)
                         .orElseThrow(() ->
-                                new IllegalArgumentException(
+                                new ResourceNotFoundException(
                                         "Candidate profile not found"
                                 )
                         );
@@ -58,7 +61,7 @@ public class ApplicationServiceImpl
                 jobPostingRepository
                         .findById(jobPostingId)
                         .orElseThrow(() ->
-                                new IllegalArgumentException(
+                                new ResourceNotFoundException(
                                         "Job posting not found"
                                 )
                         );
@@ -68,7 +71,7 @@ public class ApplicationServiceImpl
          */
         if (jobPosting.getStatus() != JobStatus.PUBLISHED) {
 
-            throw new IllegalArgumentException(
+            throw new BusinessException(
                     "Applications can only be made to published job postings"
             );
         }
@@ -76,11 +79,11 @@ public class ApplicationServiceImpl
         /*
          * Son başvuru tarihi geçmişse başvuru yapılamaz.
          */
-        if (jobPosting.getApplicationDeadline() != null &&
-                jobPosting.getApplicationDeadline()
-                        .isBefore(LocalDateTime.now())) {
+        if (jobPosting.getApplicationDeadline() != null
+                && jobPosting.getApplicationDeadline()
+                .isBefore(LocalDateTime.now())) {
 
-            throw new IllegalArgumentException(
+            throw new BusinessException(
                     "Application deadline has passed"
             );
         }
@@ -94,7 +97,7 @@ public class ApplicationServiceImpl
                         jobPostingId
                 )) {
 
-            throw new IllegalArgumentException(
+            throw new DuplicateResourceException(
                     "Candidate has already applied to this job posting"
             );
         }
@@ -111,7 +114,7 @@ public class ApplicationServiceImpl
                             candidateProfileId
                     )
                     .orElseThrow(() ->
-                            new IllegalArgumentException(
+                            new ResourceNotFoundException(
                                     "Candidate does not have a default resume"
                             )
                     );
@@ -121,7 +124,7 @@ public class ApplicationServiceImpl
             resume = resumeRepository
                     .findById(resumeId)
                     .orElseThrow(() ->
-                            new IllegalArgumentException(
+                            new ResourceNotFoundException(
                                     "Resume not found"
                             )
                     );
@@ -134,14 +137,14 @@ public class ApplicationServiceImpl
                 .getId()
                 .equals(candidateProfileId)) {
 
-            throw new IllegalArgumentException(
+            throw new BusinessException(
                     "Resume does not belong to this candidate"
             );
         }
 
         if (!resume.isActive()) {
 
-            throw new IllegalArgumentException(
+            throw new BusinessException(
                     "Inactive resume cannot be used"
             );
         }
@@ -153,8 +156,8 @@ public class ApplicationServiceImpl
         application.setResume(resume);
         application.setStatus(ApplicationStatus.APPLIED);
 
-        if (coverLetter != null &&
-                !coverLetter.isBlank()) {
+        if (coverLetter != null
+                && !coverLetter.isBlank()) {
 
             application.setCoverLetter(
                     coverLetter.trim()
@@ -169,7 +172,7 @@ public class ApplicationServiceImpl
 
         return applicationRepository.findById(id)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
+                        new ResourceNotFoundException(
                                 "Application not found"
                         )
                 );
@@ -184,7 +187,7 @@ public class ApplicationServiceImpl
         if (!candidateProfileRepository
                 .existsById(candidateProfileId)) {
 
-            throw new IllegalArgumentException(
+            throw new ResourceNotFoundException(
                     "Candidate profile not found"
             );
         }
@@ -202,7 +205,7 @@ public class ApplicationServiceImpl
         if (!jobPostingRepository
                 .existsById(jobPostingId)) {
 
-            throw new IllegalArgumentException(
+            throw new ResourceNotFoundException(
                     "Job posting not found"
             );
         }
@@ -221,7 +224,7 @@ public class ApplicationServiceImpl
         if (!jobPostingRepository
                 .existsById(jobPostingId)) {
 
-            throw new IllegalArgumentException(
+            throw new ResourceNotFoundException(
                     "Job posting not found"
             );
         }
@@ -243,14 +246,14 @@ public class ApplicationServiceImpl
                 applicationRepository
                         .findById(applicationId)
                         .orElseThrow(() ->
-                                new IllegalArgumentException(
+                                new ResourceNotFoundException(
                                         "Application not found"
                                 )
                         );
 
         if (newStatus == null) {
 
-            throw new IllegalArgumentException(
+            throw new BusinessException(
                     "Application status cannot be null"
             );
         }
@@ -267,7 +270,7 @@ public class ApplicationServiceImpl
                 newStatus
         )) {
 
-            throw new IllegalArgumentException(
+            throw new BusinessException(
                     "Invalid application status transition: "
                             + currentStatus
                             + " -> "

@@ -1,17 +1,24 @@
 package com.ahmetemresanli.backend.controller;
 
-import com.ahmetemresanli.backend.entity.Skill;
+import com.ahmetemresanli.backend.dto.request.SkillCreateRequest;
+import com.ahmetemresanli.backend.dto.response.SkillResponse;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
 public interface ISkillController {
 
-    ResponseEntity<Skill> createSkill(Skill skill);
+    ResponseEntity<SkillResponse> createSkill(
+            SkillCreateRequest request
+    );
 
-    ResponseEntity<Skill> getSkillById(Long id);
+    ResponseEntity<SkillResponse> getSkillById(
+            Long id
+    );
 
-    ResponseEntity<Skill> getSkillByName(String name);
+    ResponseEntity<SkillResponse> getSkillByName(
+            String name
+    );
 
-    ResponseEntity<List<Skill>> getAllSkills();
+    ResponseEntity<List<SkillResponse>> getAllSkills();
 }

@@ -1,17 +1,26 @@
 package com.ahmetemresanli.backend.controller;
 
-import com.ahmetemresanli.backend.entity.CandidateProfile;
+import com.ahmetemresanli.backend.dto.request.CandidateProfileCreateRequest;
+import com.ahmetemresanli.backend.dto.response.CandidateProfileResponse;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
 public interface ICandidateProfileController {
 
-    ResponseEntity<CandidateProfile> createCandidateProfile(Long userId, CandidateProfile candidateProfile);
+    ResponseEntity<CandidateProfileResponse> createCandidateProfile(
+            Long userId,
+            CandidateProfileCreateRequest request
+    );
 
-    ResponseEntity<CandidateProfile> getCandidateProfileById(Long id);
+    ResponseEntity<CandidateProfileResponse> getCandidateProfileById(
+            Long id
+    );
 
-    ResponseEntity<CandidateProfile> getCandidateProfileByUserId(Long userId);
+    ResponseEntity<CandidateProfileResponse> getCandidateProfileByUserId(
+            Long userId
+    );
 
-    ResponseEntity<List<CandidateProfile>> getAllCandidateProfiles();
+    ResponseEntity<List<CandidateProfileResponse>>
+    getAllCandidateProfiles();
 }

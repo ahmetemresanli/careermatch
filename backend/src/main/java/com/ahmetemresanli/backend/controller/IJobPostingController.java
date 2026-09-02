@@ -1,31 +1,36 @@
 package com.ahmetemresanli.backend.controller;
 
-import com.ahmetemresanli.backend.entity.JobPosting;
+import com.ahmetemresanli.backend.dto.request.JobPostingCreateRequest;
+import com.ahmetemresanli.backend.dto.response.JobPostingResponse;
 import com.ahmetemresanli.backend.enums.EmploymentType;
 import com.ahmetemresanli.backend.enums.JobLevel;
 import com.ahmetemresanli.backend.enums.WorkModel;
-import org.springframework.http.ResponseEntity;
 import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 public interface IJobPostingController {
 
-    ResponseEntity<JobPosting> createJobPosting(
+    ResponseEntity<JobPostingResponse> createJobPosting(
             Long companyId,
-            JobPosting jobPosting
+            JobPostingCreateRequest request
     );
 
-    ResponseEntity<JobPosting> getJobPostingById(Long id);
+    ResponseEntity<JobPostingResponse> getJobPostingById(
+            Long id
+    );
 
-    ResponseEntity<List<JobPosting>> getJobPostingsByCompanyId(
+    ResponseEntity<List<JobPostingResponse>>
+    getJobPostingsByCompanyId(
             Long companyId
     );
 
-    ResponseEntity<List<JobPosting>> getAllJobPostings();
+    ResponseEntity<List<JobPostingResponse>>
+    getAllJobPostings();
 
-    ResponseEntity<Page<JobPosting>> searchJobPostings(
+    ResponseEntity<Page<JobPostingResponse>> searchJobPostings(
             String keyword,
             String city,
             WorkModel workModel,
@@ -37,6 +42,4 @@ public interface IJobPostingController {
             String sortBy,
             String sortDirection
     );
-
-
 }

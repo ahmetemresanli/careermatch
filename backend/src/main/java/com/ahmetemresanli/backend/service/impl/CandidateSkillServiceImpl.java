@@ -4,6 +4,9 @@ import com.ahmetemresanli.backend.entity.CandidateProfile;
 import com.ahmetemresanli.backend.entity.CandidateSkill;
 import com.ahmetemresanli.backend.entity.Skill;
 import com.ahmetemresanli.backend.enums.SkillLevel;
+import com.ahmetemresanli.backend.exception.BusinessException;
+import com.ahmetemresanli.backend.exception.DuplicateResourceException;
+import com.ahmetemresanli.backend.exception.ResourceNotFoundException;
 import com.ahmetemresanli.backend.repository.CandidateProfileRepository;
 import com.ahmetemresanli.backend.repository.CandidateSkillRepository;
 import com.ahmetemresanli.backend.repository.SkillRepository;
@@ -41,14 +44,14 @@ public class CandidateSkillServiceImpl
         CandidateProfile candidateProfile =
                 candidateProfileRepository.findById(candidateProfileId)
                         .orElseThrow(() ->
-                                new IllegalArgumentException(
+                                new ResourceNotFoundException(
                                         "Candidate profile not found"
                                 )
                         );
 
         Skill skill = skillRepository.findById(skillId)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
+                        new ResourceNotFoundException(
                                 "Skill not found"
                         )
                 );
@@ -59,13 +62,13 @@ public class CandidateSkillServiceImpl
                         skillId
                 )) {
 
-            throw new IllegalArgumentException(
+            throw new DuplicateResourceException(
                     "Candidate already has this skill"
             );
         }
 
         if (skillLevel == null) {
-            throw new IllegalArgumentException(
+            throw new BusinessException(
                     "Skill level cannot be empty"
             );
         }
@@ -73,7 +76,7 @@ public class CandidateSkillServiceImpl
         if (yearsOfExperience != null
                 && yearsOfExperience < 0) {
 
-            throw new IllegalArgumentException(
+            throw new BusinessException(
                     "Years of experience cannot be negative"
             );
         }
@@ -94,7 +97,7 @@ public class CandidateSkillServiceImpl
 
         return candidateSkillRepository.findById(id)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
+                        new ResourceNotFoundException(
                                 "Candidate skill not found"
                         )
                 );

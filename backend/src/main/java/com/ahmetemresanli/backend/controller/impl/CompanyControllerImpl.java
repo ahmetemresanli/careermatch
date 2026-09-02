@@ -1,8 +1,12 @@
 package com.ahmetemresanli.backend.controller.impl;
 
 import com.ahmetemresanli.backend.controller.ICompanyController;
+import com.ahmetemresanli.backend.dto.request.CompanyCreateRequest;
+import com.ahmetemresanli.backend.dto.response.CompanyResponse;
 import com.ahmetemresanli.backend.entity.Company;
+import com.ahmetemresanli.backend.mapper.CompanyMapper;
 import com.ahmetemresanli.backend.service.ICompanyService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,45 +15,76 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/companies")
-public class CompanyControllerImpl implements ICompanyController {
+public class CompanyControllerImpl
+        implements ICompanyController {
 
     private final ICompanyService companyService;
 
-    public CompanyControllerImpl(ICompanyService companyService) {
+    public CompanyControllerImpl(
+            ICompanyService companyService
+    ) {
         this.companyService = companyService;
     }
 
     @Override
     @PostMapping
-    public ResponseEntity<Company> createCompany(@RequestBody Company company) {
+    public ResponseEntity<CompanyResponse> createCompany(
+            @Valid @RequestBody CompanyCreateRequest request
+    ) {
 
-        Company savedCompany = companyService.createCompany(company);
+        Company company =
+                CompanyMapper.toEntity(request);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedCompany);
+        Company createdCompany =
+                companyService.createCompany(company);
+
+        CompanyResponse response =
+                CompanyMapper.toResponse(createdCompany);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
     }
 
     @Override
     @GetMapping("/{id}")
-    public ResponseEntity<Company> getCompanyById(@PathVariable Long id) {
+    public ResponseEntity<CompanyResponse> getCompanyById(
+            @PathVariable Long id
+    ) {
 
-        Company company = companyService.getCompanyById(id);
+        Company company =
+                companyService.getCompanyById(id);
 
-        return ResponseEntity.ok(company);
+        return ResponseEntity.ok(
+                CompanyMapper.toResponse(company)
+        );
     }
 
     @Override
-    @GetMapping("/domain/{domain}")
-    public ResponseEntity<Company> getCompanyByDomain(@PathVariable String domain) {
-        Company company = companyService.getCompanyByDomain(domain);
+    @GetMapping("/domain")
+    public ResponseEntity<CompanyResponse> getCompanyByDomain(
+            @RequestParam String domain
+    ) {
 
-        return ResponseEntity.ok(company);
+        Company company =
+                companyService.getCompanyByDomain(domain);
+
+        return ResponseEntity.ok(
+                CompanyMapper.toResponse(company)
+        );
     }
 
     @Override
     @GetMapping
-    public ResponseEntity<List<Company>> getAllCompanies() {
-        List<Company> companies = companyService.getAllCompanies();
+    public ResponseEntity<List<CompanyResponse>>
+    getAllCompanies() {
 
-        return ResponseEntity.ok(companies);
+        List<CompanyResponse> responses =
+                companyService.getAllCompanies()
+                        .stream()
+                        .map(CompanyMapper::toResponse)
+                        .toList();
+
+        return ResponseEntity.ok(responses);
     }
 }

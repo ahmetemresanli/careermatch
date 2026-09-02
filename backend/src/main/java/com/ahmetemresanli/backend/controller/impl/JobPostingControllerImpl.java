@@ -1,11 +1,15 @@
 package com.ahmetemresanli.backend.controller.impl;
 
 import com.ahmetemresanli.backend.controller.IJobPostingController;
+import com.ahmetemresanli.backend.dto.request.JobPostingCreateRequest;
+import com.ahmetemresanli.backend.dto.response.JobPostingResponse;
 import com.ahmetemresanli.backend.entity.JobPosting;
 import com.ahmetemresanli.backend.enums.EmploymentType;
 import com.ahmetemresanli.backend.enums.JobLevel;
 import com.ahmetemresanli.backend.enums.WorkModel;
+import com.ahmetemresanli.backend.mapper.JobPostingMapper;
 import com.ahmetemresanli.backend.service.IJobPostingService;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,62 +33,81 @@ public class JobPostingControllerImpl
 
     @Override
     @PostMapping("/company/{companyId}")
-    public ResponseEntity<JobPosting> createJobPosting(
+    public ResponseEntity<JobPostingResponse> createJobPosting(
             @PathVariable Long companyId,
-            @RequestBody JobPosting jobPosting
+            @Valid @RequestBody JobPostingCreateRequest request
     ) {
 
-        JobPosting savedJobPosting =
+        JobPosting jobPosting =
+                JobPostingMapper.toEntity(request);
+
+        JobPosting createdJobPosting =
                 jobPostingService.createJobPosting(
                         companyId,
                         jobPosting
                 );
 
+        JobPostingResponse response =
+                JobPostingMapper.toResponse(
+                        createdJobPosting
+                );
+
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(savedJobPosting);
+                .body(response);
     }
 
     @Override
     @GetMapping("/{id}")
-    public ResponseEntity<JobPosting> getJobPostingById(
+    public ResponseEntity<JobPostingResponse>
+    getJobPostingById(
             @PathVariable Long id
     ) {
 
         JobPosting jobPosting =
                 jobPostingService.getJobPostingById(id);
 
-        return ResponseEntity.ok(jobPosting);
+        return ResponseEntity.ok(
+                JobPostingMapper.toResponse(jobPosting)
+        );
     }
 
     @Override
     @GetMapping("/company/{companyId}")
-    public ResponseEntity<List<JobPosting>>
+    public ResponseEntity<List<JobPostingResponse>>
     getJobPostingsByCompanyId(
             @PathVariable Long companyId
     ) {
 
-        List<JobPosting> jobPostings =
+        List<JobPostingResponse> responses =
                 jobPostingService
-                        .getJobPostingsByCompanyId(companyId);
+                        .getJobPostingsByCompanyId(companyId)
+                        .stream()
+                        .map(JobPostingMapper::toResponse)
+                        .toList();
 
-        return ResponseEntity.ok(jobPostings);
+        return ResponseEntity.ok(responses);
     }
 
     @Override
     @GetMapping
-    public ResponseEntity<List<JobPosting>>
+    public ResponseEntity<List<JobPostingResponse>>
     getAllJobPostings() {
 
-        List<JobPosting> jobPostings =
-                jobPostingService.getAllJobPostings();
+        List<JobPostingResponse> responses =
+                jobPostingService
+                        .getAllJobPostings()
+                        .stream()
+                        .map(JobPostingMapper::toResponse)
+                        .toList();
 
-        return ResponseEntity.ok(jobPostings);
+        return ResponseEntity.ok(responses);
     }
 
     @Override
     @GetMapping("/search")
-    public ResponseEntity<Page<JobPosting>> searchJobPostings(
+    public ResponseEntity<Page<JobPostingResponse>>
+    searchJobPostings(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String city,
             @RequestParam(required = false) WorkModel workModel,
@@ -111,6 +134,11 @@ public class JobPostingControllerImpl
                         sortDirection
                 );
 
-        return ResponseEntity.ok(jobPostings);
+        Page<JobPostingResponse> responses =
+                jobPostings.map(
+                        JobPostingMapper::toResponse
+                );
+
+        return ResponseEntity.ok(responses);
     }
 }

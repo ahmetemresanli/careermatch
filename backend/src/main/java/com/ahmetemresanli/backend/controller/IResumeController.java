@@ -1,26 +1,28 @@
 package com.ahmetemresanli.backend.controller;
 
-import com.ahmetemresanli.backend.entity.Resume;
+import com.ahmetemresanli.backend.dto.request.ResumeCreateRequest;
+import com.ahmetemresanli.backend.dto.response.ResumeResponse;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
 public interface IResumeController {
 
-    ResponseEntity<Resume> createResume(
+    ResponseEntity<ResumeResponse> createResume(
             Long candidateProfileId,
-            Resume resume
+            ResumeCreateRequest request
     );
 
-    ResponseEntity<Resume> getResumeById(
+    ResponseEntity<ResumeResponse> getResumeById(
             Long id
     );
 
-    ResponseEntity<List<Resume>> getResumesByCandidateProfileId(
+    ResponseEntity<List<ResumeResponse>>
+    getResumesByCandidateProfileId(
             Long candidateProfileId
     );
 
-    ResponseEntity<Resume> setDefaultResume(
+    ResponseEntity<ResumeResponse> setDefaultResume(
             Long candidateProfileId,
             Long resumeId
     );

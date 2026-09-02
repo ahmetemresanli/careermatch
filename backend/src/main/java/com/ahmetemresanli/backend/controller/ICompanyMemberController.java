@@ -1,18 +1,28 @@
 package com.ahmetemresanli.backend.controller;
 
-import com.ahmetemresanli.backend.entity.CompanyMember;
-import com.ahmetemresanli.backend.enums.CompanyMemberRole;
+import com.ahmetemresanli.backend.dto.request.CompanyMemberCreateRequest;
+import com.ahmetemresanli.backend.dto.response.CompanyMemberResponse;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
 public interface ICompanyMemberController {
 
-    ResponseEntity<CompanyMember> addMember(Long userId, Long companyId, CompanyMemberRole memberRole);
+    ResponseEntity<CompanyMemberResponse> addMember(
+            Long userId,
+            Long companyId,
+            CompanyMemberCreateRequest request
+    );
 
-    ResponseEntity<CompanyMember> getCompanyMemberById(Long id);
+    ResponseEntity<CompanyMemberResponse> getCompanyMemberById(
+            Long id
+    );
 
-    ResponseEntity<List<CompanyMember>> getMembersByCompanyId(Long companyId);
+    ResponseEntity<List<CompanyMemberResponse>> getMembersByCompanyId(
+            Long companyId
+    );
 
-    ResponseEntity<List<CompanyMember>> getMembershipsByUserId(Long userId);
+    ResponseEntity<List<CompanyMemberResponse>> getMembershipsByUserId(
+            Long userId
+    );
 }

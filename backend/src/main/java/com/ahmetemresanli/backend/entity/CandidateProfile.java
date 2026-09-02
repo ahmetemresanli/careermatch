@@ -64,7 +64,7 @@ public class CandidateProfile {
     private boolean visibleToRecruiters = true;
 
     @Column(name = "expected_min_salary", precision = 12, scale = 2)
-    private BigDecimal expectMinSalary;
+    private BigDecimal expectedMinSalary;
 
     @Column(name = "expected_max_salary", precision = 12, scale = 2)
     private BigDecimal expectedMaxSalary;

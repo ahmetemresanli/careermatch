@@ -1,6 +1,8 @@
 package com.ahmetemresanli.backend.service.impl;
 
 import com.ahmetemresanli.backend.entity.Company;
+import com.ahmetemresanli.backend.exception.DuplicateResourceException;
+import com.ahmetemresanli.backend.exception.ResourceNotFoundException;
 import com.ahmetemresanli.backend.repository.CompanyRepository;
 import com.ahmetemresanli.backend.service.ICompanyService;
 import org.springframework.stereotype.Service;
@@ -23,7 +25,7 @@ public class CompanyServiceImpl implements ICompanyService {
                 && !company.getDomain().isBlank()
                 && companyRepository.existsByDomain(company.getDomain())) {
 
-            throw new IllegalArgumentException(
+            throw new DuplicateResourceException(
                     "Company domain already exists"
             );
         }
@@ -33,9 +35,10 @@ public class CompanyServiceImpl implements ICompanyService {
 
     @Override
     public Company getCompanyById(Long id) {
+
         return companyRepository.findById(id)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
+                        new ResourceNotFoundException(
                                 "Company not found"
                         )
                 );
@@ -43,9 +46,10 @@ public class CompanyServiceImpl implements ICompanyService {
 
     @Override
     public Company getCompanyByDomain(String domain) {
+
         return companyRepository.findByDomain(domain)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
+                        new ResourceNotFoundException(
                                 "Company not found"
                         )
                 );

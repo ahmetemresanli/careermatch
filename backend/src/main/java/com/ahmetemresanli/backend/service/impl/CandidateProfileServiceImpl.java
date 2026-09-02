@@ -3,6 +3,9 @@ package com.ahmetemresanli.backend.service.impl;
 import com.ahmetemresanli.backend.entity.CandidateProfile;
 import com.ahmetemresanli.backend.entity.User;
 import com.ahmetemresanli.backend.enums.UserRole;
+import com.ahmetemresanli.backend.exception.BusinessException;
+import com.ahmetemresanli.backend.exception.DuplicateResourceException;
+import com.ahmetemresanli.backend.exception.ResourceNotFoundException;
 import com.ahmetemresanli.backend.repository.CandidateProfileRepository;
 import com.ahmetemresanli.backend.repository.UserRepository;
 import com.ahmetemresanli.backend.service.ICandidateProfileService;
@@ -11,13 +14,16 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class CandidateProfileServiceImpl implements ICandidateProfileService {
+public class CandidateProfileServiceImpl
+        implements ICandidateProfileService {
 
     private final CandidateProfileRepository candidateProfileRepository;
     private final UserRepository userRepository;
 
-    public CandidateProfileServiceImpl(CandidateProfileRepository candidateProfileRepository,
-                                       UserRepository userRepository){
+    public CandidateProfileServiceImpl(
+            CandidateProfileRepository candidateProfileRepository,
+            UserRepository userRepository
+    ) {
         this.candidateProfileRepository = candidateProfileRepository;
         this.userRepository = userRepository;
     }
@@ -30,17 +36,19 @@ public class CandidateProfileServiceImpl implements ICandidateProfileService {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("User not found")
+                        new ResourceNotFoundException(
+                                "User not found"
+                        )
                 );
 
         if (user.getRole() != UserRole.CANDIDATE) {
-            throw new IllegalArgumentException(
+            throw new BusinessException(
                     "Only candidate users can have a candidate profile"
             );
         }
 
         if (candidateProfileRepository.existsByUserId(userId)) {
-            throw new IllegalArgumentException(
+            throw new DuplicateResourceException(
                     "Candidate profile already exists"
             );
         }
@@ -52,17 +60,24 @@ public class CandidateProfileServiceImpl implements ICandidateProfileService {
 
     @Override
     public CandidateProfile getCandidateProfileById(Long id) {
-        return candidateProfileRepository.findById(id).orElseThrow(() ->
-                new IllegalArgumentException(
-                    "Candidate profile not found"));
+
+        return candidateProfileRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Candidate profile not found"
+                        )
+                );
     }
 
     @Override
     public CandidateProfile getCandidateProfileByUserId(Long userId) {
+
         return candidateProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Candidate profile not found"
-                ));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Candidate profile not found"
+                        )
+                );
     }
 
     @Override

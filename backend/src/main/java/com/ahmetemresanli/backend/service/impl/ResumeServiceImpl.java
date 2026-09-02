@@ -2,6 +2,8 @@ package com.ahmetemresanli.backend.service.impl;
 
 import com.ahmetemresanli.backend.entity.CandidateProfile;
 import com.ahmetemresanli.backend.entity.Resume;
+import com.ahmetemresanli.backend.exception.BusinessException;
+import com.ahmetemresanli.backend.exception.ResourceNotFoundException;
 import com.ahmetemresanli.backend.repository.CandidateProfileRepository;
 import com.ahmetemresanli.backend.repository.ResumeRepository;
 import com.ahmetemresanli.backend.service.IResumeService;
@@ -33,23 +35,23 @@ public class ResumeServiceImpl implements IResumeService {
         CandidateProfile candidateProfile =
                 candidateProfileRepository.findById(candidateProfileId)
                         .orElseThrow(() ->
-                                new IllegalArgumentException(
+                                new ResourceNotFoundException(
                                         "Candidate profile not found"
                                 )
                         );
 
-        if (resume.getFileName() == null ||
-                resume.getFileName().isBlank()) {
+        if (resume.getFileName() == null
+                || resume.getFileName().isBlank()) {
 
-            throw new IllegalArgumentException(
+            throw new BusinessException(
                     "File name cannot be empty"
             );
         }
 
-        if (resume.getFileUrl() == null ||
-                resume.getFileUrl().isBlank()) {
+        if (resume.getFileUrl() == null
+                || resume.getFileUrl().isBlank()) {
 
-            throw new IllegalArgumentException(
+            throw new BusinessException(
                     "File URL cannot be empty"
             );
         }
@@ -61,7 +63,7 @@ public class ResumeServiceImpl implements IResumeService {
                         );
 
         /*
-         * Eğer adayın hiç varsayılan CV'si yoksa,
+         * Adayın hiç varsayılan CV'si yoksa,
          * oluşturulan ilk CV otomatik olarak default olur.
          */
         if (currentDefaultResume.isEmpty()) {
@@ -89,7 +91,7 @@ public class ResumeServiceImpl implements IResumeService {
 
         return resumeRepository.findById(id)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
+                        new ResourceNotFoundException(
                                 "Resume not found"
                         )
                 );
@@ -102,7 +104,7 @@ public class ResumeServiceImpl implements IResumeService {
 
         if (!candidateProfileRepository.existsById(candidateProfileId)) {
 
-            throw new IllegalArgumentException(
+            throw new ResourceNotFoundException(
                     "Candidate profile not found"
             );
         }
@@ -120,7 +122,7 @@ public class ResumeServiceImpl implements IResumeService {
         Resume resume =
                 resumeRepository.findById(resumeId)
                         .orElseThrow(() ->
-                                new IllegalArgumentException(
+                                new ResourceNotFoundException(
                                         "Resume not found"
                                 )
                         );
@@ -129,14 +131,14 @@ public class ResumeServiceImpl implements IResumeService {
                 .getId()
                 .equals(candidateProfileId)) {
 
-            throw new IllegalArgumentException(
+            throw new BusinessException(
                     "Resume does not belong to this candidate"
             );
         }
 
         if (!resume.isActive()) {
 
-            throw new IllegalArgumentException(
+            throw new BusinessException(
                     "Inactive resume cannot be default"
             );
         }
