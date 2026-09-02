@@ -3,6 +3,7 @@ package com.ahmetemresanli.backend.service;
 import com.ahmetemresanli.backend.entity.JobPosting;
 import com.ahmetemresanli.backend.enums.EmploymentType;
 import com.ahmetemresanli.backend.enums.JobLevel;
+import com.ahmetemresanli.backend.enums.JobStatus;
 import com.ahmetemresanli.backend.enums.WorkModel;
 import org.springframework.data.domain.Page;
 
@@ -33,5 +34,10 @@ public interface IJobPostingService {
             int size,
             String sortBy,
             String sortDirection
+    );
+
+    JobPosting updateStatus(
+            Long jobPostingId,
+            JobStatus status
     );
 }

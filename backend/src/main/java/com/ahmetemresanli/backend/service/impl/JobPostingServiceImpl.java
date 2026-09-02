@@ -4,6 +4,7 @@ import com.ahmetemresanli.backend.entity.Company;
 import com.ahmetemresanli.backend.entity.JobPosting;
 import com.ahmetemresanli.backend.enums.EmploymentType;
 import com.ahmetemresanli.backend.enums.JobLevel;
+import com.ahmetemresanli.backend.enums.JobStatus;
 import com.ahmetemresanli.backend.enums.WorkModel;
 import com.ahmetemresanli.backend.exception.BusinessException;
 import com.ahmetemresanli.backend.exception.ResourceNotFoundException;
@@ -21,12 +22,21 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class JobPostingServiceImpl implements IJobPostingService {
 
     private final JobPostingRepository jobPostingRepository;
     private final CompanyRepository companyRepository;
+
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
+            "createdAt",
+            "title",
+            "minimumSalary",
+            "maximumSalary",
+            "applicationDeadline"
+    );
 
     public JobPostingServiceImpl(
             JobPostingRepository jobPostingRepository,
@@ -182,17 +192,49 @@ public class JobPostingServiceImpl implements IJobPostingService {
             String sortDirection
     ) {
 
+        if (page < 0) {
+            throw new BusinessException(
+                    "Page number cannot be negative"
+            );
+        }
+
+        if (size <= 0 || size > 100) {
+            throw new BusinessException(
+                    "Page size must be between 1 and 100"
+            );
+        }
+
+        if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
+            throw new BusinessException(
+                    "Invalid sort field: " + sortBy
+            );
+        }
+
+        if (!sortDirection.equalsIgnoreCase("asc")
+                && !sortDirection.equalsIgnoreCase("desc")) {
+
+            throw new BusinessException(
+                    "Sort direction must be 'asc' or 'desc'"
+            );
+        }
+
+        if (minimumSalary != null
+                && minimumSalary.compareTo(BigDecimal.ZERO) < 0) {
+
+            throw new BusinessException(
+                    "Minimum salary cannot be negative"
+            );
+        }
+
         Sort.Direction direction =
                 sortDirection.equalsIgnoreCase("desc")
                         ? Sort.Direction.DESC
                         : Sort.Direction.ASC;
 
-        Sort sort = Sort.by(direction, sortBy);
-
         Pageable pageable = PageRequest.of(
                 page,
                 size,
-                sort
+                Sort.by(direction, sortBy)
         );
 
         return jobPostingRepository.findAll(
@@ -206,5 +248,67 @@ public class JobPostingServiceImpl implements IJobPostingService {
                 ),
                 pageable
         );
+    }
+
+    @Override
+    public JobPosting updateStatus(
+            Long jobPostingId,
+            JobStatus newStatus
+    ) {
+
+        JobPosting jobPosting =
+                jobPostingRepository.findById(jobPostingId)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Job posting not found"
+                                )
+                        );
+
+        if (newStatus == null) {
+            throw new BusinessException(
+                    "Job status cannot be null"
+            );
+        }
+
+        JobStatus currentStatus =
+                jobPosting.getStatus();
+
+        boolean validTransition =
+                switch (currentStatus) {
+
+                    case DRAFT ->
+                            newStatus == JobStatus.PUBLISHED
+                                    || newStatus == JobStatus.CLOSED;
+
+                    case PUBLISHED ->
+                            newStatus == JobStatus.CLOSED;
+
+                    case CLOSED -> false;
+                };
+
+        if (!validTransition) {
+            throw new BusinessException(
+                    "Invalid job status transition: "
+                            + currentStatus
+                            + " -> "
+                            + newStatus
+            );
+        }
+
+        if (newStatus == JobStatus.PUBLISHED) {
+
+            if (jobPosting.getApplicationDeadline() != null
+                    && jobPosting.getApplicationDeadline()
+                    .isBefore(java.time.LocalDateTime.now())) {
+
+                throw new BusinessException(
+                        "A job posting with an expired deadline cannot be published"
+                );
+            }
+        }
+
+        jobPosting.setStatus(newStatus);
+
+        return jobPostingRepository.save(jobPosting);
     }
 }

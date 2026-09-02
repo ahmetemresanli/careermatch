@@ -2,6 +2,7 @@ package com.ahmetemresanli.backend.controller.impl;
 
 import com.ahmetemresanli.backend.controller.IJobPostingController;
 import com.ahmetemresanli.backend.dto.request.JobPostingCreateRequest;
+import com.ahmetemresanli.backend.dto.request.JobPostingStatusUpdateRequest;
 import com.ahmetemresanli.backend.dto.response.JobPostingResponse;
 import com.ahmetemresanli.backend.entity.JobPosting;
 import com.ahmetemresanli.backend.enums.EmploymentType;
@@ -140,5 +141,23 @@ public class JobPostingControllerImpl
                 );
 
         return ResponseEntity.ok(responses);
+    }
+
+    @PutMapping("/{jobPostingId}/status")
+    @Override
+    public ResponseEntity<JobPostingResponse> updateStatus(
+            @PathVariable Long jobPostingId,
+            @Valid @RequestBody JobPostingStatusUpdateRequest request
+    ) {
+
+        JobPosting updatedJobPosting =
+                jobPostingService.updateStatus(
+                        jobPostingId,
+                        request.getStatus()
+                );
+
+        return ResponseEntity.ok(
+                JobPostingMapper.toResponse(updatedJobPosting)
+        );
     }
 }

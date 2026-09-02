@@ -10,7 +10,6 @@ import com.ahmetemresanli.backend.service.IResumeService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ResumeServiceImpl implements IResumeService {
@@ -44,7 +43,7 @@ public class ResumeServiceImpl implements IResumeService {
                 || resume.getFileName().isBlank()) {
 
             throw new BusinessException(
-                    "File name cannot be empty"
+                    "Resume file name cannot be empty"
             );
         }
 
@@ -52,36 +51,34 @@ public class ResumeServiceImpl implements IResumeService {
                 || resume.getFileUrl().isBlank()) {
 
             throw new BusinessException(
-                    "File URL cannot be empty"
+                    "Resume file URL cannot be empty"
             );
         }
 
-        Optional<Resume> currentDefaultResume =
-                resumeRepository
-                        .findByCandidateProfileIdAndDefaultResumeTrue(
-                                candidateProfileId
-                        );
+        resume.setCandidateProfile(candidateProfile);
 
-        /*
-         * Adayın hiç varsayılan CV'si yoksa,
-         * oluşturulan ilk CV otomatik olarak default olur.
-         */
-        if (currentDefaultResume.isEmpty()) {
+        List<Resume> candidateResumes =
+                resumeRepository.findByCandidateProfileId(
+                        candidateProfileId
+                );
+
+        // İlk CV otomatik olarak default olur
+        if (candidateResumes.isEmpty()) {
 
             resume.setDefaultResume(true);
 
-        } else if (resume.isDefaultResume()) {
-
-            Resume oldDefaultResume =
-                    currentDefaultResume.get();
-
-            oldDefaultResume.setDefaultResume(false);
-
-            resumeRepository.save(oldDefaultResume);
         }
+        // Yeni CV default olarak oluşturuluyorsa
+        // eski default CV devre dışı bırakılır
+        else if (resume.isDefaultResume()) {
 
-        resume.setCandidateProfile(candidateProfile);
-        resume.setActive(true);
+            candidateResumes.stream()
+                    .filter(Resume::isDefaultResume)
+                    .forEach(existingResume -> {
+                        existingResume.setDefaultResume(false);
+                        resumeRepository.save(existingResume);
+                    });
+        }
 
         return resumeRepository.save(resume);
     }
@@ -109,8 +106,9 @@ public class ResumeServiceImpl implements IResumeService {
             );
         }
 
-        return resumeRepository
-                .findByCandidateProfileId(candidateProfileId);
+        return resumeRepository.findByCandidateProfileId(
+                candidateProfileId
+        );
     }
 
     @Override
@@ -118,6 +116,14 @@ public class ResumeServiceImpl implements IResumeService {
             Long candidateProfileId,
             Long resumeId
     ) {
+
+        CandidateProfile candidateProfile =
+                candidateProfileRepository.findById(candidateProfileId)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Candidate profile not found"
+                                )
+                        );
 
         Resume resume =
                 resumeRepository.findById(resumeId)
@@ -129,7 +135,7 @@ public class ResumeServiceImpl implements IResumeService {
 
         if (!resume.getCandidateProfile()
                 .getId()
-                .equals(candidateProfileId)) {
+                .equals(candidateProfile.getId())) {
 
             throw new BusinessException(
                     "Resume does not belong to this candidate"
@@ -139,26 +145,26 @@ public class ResumeServiceImpl implements IResumeService {
         if (!resume.isActive()) {
 
             throw new BusinessException(
-                    "Inactive resume cannot be default"
+                    "Inactive resume cannot be set as default"
             );
         }
 
-        Optional<Resume> currentDefaultResume =
-                resumeRepository
-                        .findByCandidateProfileIdAndDefaultResumeTrue(
-                                candidateProfileId
-                        );
+        List<Resume> candidateResumes =
+                resumeRepository.findByCandidateProfileId(
+                        candidateProfileId
+                );
 
-        if (currentDefaultResume.isPresent()) {
+        // Eski default CV'yi kaldır
+        candidateResumes.stream()
+                .filter(Resume::isDefaultResume)
+                .forEach(existingResume -> {
 
-            Resume oldDefaultResume =
-                    currentDefaultResume.get();
+                    existingResume.setDefaultResume(false);
 
-            oldDefaultResume.setDefaultResume(false);
+                    resumeRepository.save(existingResume);
+                });
 
-            resumeRepository.save(oldDefaultResume);
-        }
-
+        // Seçilen CV'yi default yap
         resume.setDefaultResume(true);
 
         return resumeRepository.save(resume);

@@ -53,6 +53,16 @@ public class CandidateProfileServiceImpl
             );
         }
 
+        if (candidateProfile.getExpectedMinSalary() != null
+                && candidateProfile.getExpectedMaxSalary() != null
+                && candidateProfile.getExpectedMinSalary()
+                .compareTo(candidateProfile.getExpectedMaxSalary()) > 0) {
+
+            throw new BusinessException(
+                    "Expected minimum salary cannot be greater than expected maximum salary"
+            );
+        }
+
         candidateProfile.setUser(user);
 
         return candidateProfileRepository.save(candidateProfile);

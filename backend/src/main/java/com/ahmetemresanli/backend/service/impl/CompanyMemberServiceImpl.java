@@ -53,6 +53,12 @@ public class CompanyMemberServiceImpl implements ICompanyMemberService {
             );
         }
 
+        if (!user.isActive()) {
+            throw new BusinessException(
+                    "Inactive user cannot be added to a company"
+            );
+        }
+
         Company company = companyRepository.findById(companyId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
@@ -60,15 +66,31 @@ public class CompanyMemberServiceImpl implements ICompanyMemberService {
                         )
                 );
 
+        if (!company.isActive()) {
+            throw new BusinessException(
+                    "Member cannot be added to an inactive company"
+            );
+        }
+
         if (companyMemberRepository
-                .existsByUserIdAndCompanyId(userId, companyId)) {
+                .existsByUserIdAndCompanyId(
+                        userId,
+                        companyId
+                )) {
 
             throw new DuplicateResourceException(
                     "User is already a member of this company"
             );
         }
 
-        CompanyMember companyMember = new CompanyMember();
+        if (memberRole == null) {
+            throw new BusinessException(
+                    "Company member role cannot be null"
+            );
+        }
+
+        CompanyMember companyMember =
+                new CompanyMember();
 
         companyMember.setUser(user);
         companyMember.setCompany(company);

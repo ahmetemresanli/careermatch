@@ -1,6 +1,7 @@
 package com.ahmetemresanli.backend.service.impl;
 
 import com.ahmetemresanli.backend.entity.Company;
+import com.ahmetemresanli.backend.exception.BusinessException;
 import com.ahmetemresanli.backend.exception.DuplicateResourceException;
 import com.ahmetemresanli.backend.exception.ResourceNotFoundException;
 import com.ahmetemresanli.backend.repository.CompanyRepository;
@@ -14,21 +15,56 @@ public class CompanyServiceImpl implements ICompanyService {
 
     private final CompanyRepository companyRepository;
 
-    public CompanyServiceImpl(CompanyRepository companyRepository) {
+    public CompanyServiceImpl(
+            CompanyRepository companyRepository
+    ) {
         this.companyRepository = companyRepository;
     }
 
     @Override
     public Company createCompany(Company company) {
 
-        if (company.getDomain() != null
-                && !company.getDomain().isBlank()
-                && companyRepository.existsByDomain(company.getDomain())) {
+        if (company.getName() == null
+                || company.getName().isBlank()) {
+
+            throw new BusinessException(
+                    "Company name cannot be empty"
+            );
+        }
+
+        if (company.getDomain() == null
+                || company.getDomain().isBlank()) {
+
+            throw new BusinessException(
+                    "Company domain cannot be empty"
+            );
+        }
+
+        if (company.getEmployeeCount() != null
+                && company.getEmployeeCount() < 0) {
+
+            throw new BusinessException(
+                    "Employee count cannot be negative"
+            );
+        }
+
+        String companyName =
+                company.getName().trim();
+
+        String domain =
+                company.getDomain()
+                        .trim()
+                        .toLowerCase();
+
+        if (companyRepository.existsByDomain(domain)) {
 
             throw new DuplicateResourceException(
                     "Company domain already exists"
             );
         }
+
+        company.setName(companyName);
+        company.setDomain(domain);
 
         return companyRepository.save(company);
     }
@@ -47,7 +83,17 @@ public class CompanyServiceImpl implements ICompanyService {
     @Override
     public Company getCompanyByDomain(String domain) {
 
-        return companyRepository.findByDomain(domain)
+        if (domain == null || domain.isBlank()) {
+            throw new BusinessException(
+                    "Company domain cannot be empty"
+            );
+        }
+
+        String normalizedDomain =
+                domain.trim().toLowerCase();
+
+        return companyRepository
+                .findByDomain(normalizedDomain)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "Company not found"
@@ -57,6 +103,7 @@ public class CompanyServiceImpl implements ICompanyService {
 
     @Override
     public List<Company> getAllCompanies() {
+
         return companyRepository.findAll();
     }
 }

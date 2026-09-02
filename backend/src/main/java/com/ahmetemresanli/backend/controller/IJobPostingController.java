@@ -1,6 +1,7 @@
 package com.ahmetemresanli.backend.controller;
 
 import com.ahmetemresanli.backend.dto.request.JobPostingCreateRequest;
+import com.ahmetemresanli.backend.dto.request.JobPostingStatusUpdateRequest;
 import com.ahmetemresanli.backend.dto.response.JobPostingResponse;
 import com.ahmetemresanli.backend.enums.EmploymentType;
 import com.ahmetemresanli.backend.enums.JobLevel;
@@ -41,5 +42,10 @@ public interface IJobPostingController {
             int size,
             String sortBy,
             String sortDirection
+    );
+
+    ResponseEntity<JobPostingResponse> updateStatus(
+            Long jobPostingId,
+            JobPostingStatusUpdateRequest request
     );
 }
