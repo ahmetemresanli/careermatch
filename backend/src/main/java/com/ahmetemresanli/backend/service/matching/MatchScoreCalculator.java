@@ -2,41 +2,66 @@ package com.ahmetemresanli.backend.service.matching;
 
 import com.ahmetemresanli.backend.entity.CandidateProfile;
 import com.ahmetemresanli.backend.entity.CandidateSkill;
+import com.ahmetemresanli.backend.entity.Experience;
 import com.ahmetemresanli.backend.entity.JobPosting;
 import com.ahmetemresanli.backend.entity.JobSkill;
 import com.ahmetemresanli.backend.enums.SkillLevel;
 import com.ahmetemresanli.backend.enums.WorkModel;
+import com.ahmetemresanli.backend.repository.ExperienceRepository;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
 public class MatchScoreCalculator {
 
-    private static final double SKILL_WEIGHT = 60.0;
-    private static final double WORK_MODEL_WEIGHT = 15.0;
-    private static final double SALARY_WEIGHT = 15.0;
+    private static final double SKILL_WEIGHT = 50.0;
+    private static final double EXPERIENCE_WEIGHT = 20.0;
+    private static final double WORK_MODEL_WEIGHT = 10.0;
+    private static final double SALARY_WEIGHT = 10.0;
     private static final double LOCATION_WEIGHT = 10.0;
+
+    private final ExperienceRepository experienceRepository;
+
+    public MatchScoreCalculator(ExperienceRepository experienceRepository) {
+        this.experienceRepository = experienceRepository;
+    }
 
     public BigDecimal calculateScore(
             CandidateProfile candidate,
             JobPosting jobPosting
     ) {
 
-        double skillScore = calculateSkillScore(candidate, jobPosting);
+        double skillScore =
+                calculateSkillScore(candidate, jobPosting);
 
-        double workModelScore = calculateWorkModelScore(candidate, jobPosting);
+        double experienceScore =
+                calculateExperienceScore(candidate, jobPosting);
 
-        double salaryScore = calculateSalaryScore(candidate, jobPosting);
+        double workModelScore =
+                calculateWorkModelScore(candidate, jobPosting);
 
-        double locationScore = calculateLocationScore(candidate, jobPosting);
+        double salaryScore =
+                calculateSalaryScore(candidate, jobPosting);
 
-        double totalScore = skillScore + workModelScore + salaryScore + locationScore;
+        double locationScore =
+                calculateLocationScore(candidate, jobPosting);
 
-        return BigDecimal.valueOf(totalScore).setScale(2, RoundingMode.HALF_UP);
+        double totalScore =
+                skillScore
+                        + experienceScore
+                        + workModelScore
+                        + salaryScore
+                        + locationScore;
+
+        return BigDecimal.valueOf(totalScore)
+                .setScale(2, RoundingMode.HALF_UP);
     }
 
     private double calculateSkillScore(
@@ -74,12 +99,6 @@ public class MatchScoreCalculator {
         for (JobSkill jobSkill :
                 jobPosting.getJobSkills()) {
 
-            /*
-             * Required skill daha önemli.
-             *
-             * required = true  -> ağırlık 2
-             * required = false -> ağırlık 1
-             */
             double skillImportance =
                     jobSkill.isRequired()
                             ? 2.0
@@ -92,41 +111,102 @@ public class MatchScoreCalculator {
                             jobSkill.getSkill().getId()
                     );
 
-            // Adayda bu skill hiç yok
             if (candidateSkill == null) {
                 continue;
             }
 
-            int candidateLevel = getSkillLevelValue(candidateSkill.getSkillLevel());
+            int candidateLevel =
+                    getSkillLevelValue(
+                            candidateSkill.getSkillLevel()
+                    );
 
-            int requiredLevel = getSkillLevelValue(jobSkill.getRequiredSkillLevel());
+            int requiredLevel =
+                    getSkillLevelValue(
+                            jobSkill.getRequiredSkillLevel()
+                    );
 
-            /*
-             * Örnek:
-             *
-             * Candidate INTERMEDIATE = 2
-             * Job ADVANCED = 3
-             *
-             * 2 / 3 = %66 skill karşılanıyor.
-             *
-             * Candidate EXPERT = 4
-             * Job ADVANCED = 3
-             *
-             * 4 / 3 > 1 olduğu için maksimum 1 alınır.
-             */
-            double levelRatio = Math.min(
+            double levelRatio =
+                    Math.min(
                             (double) candidateLevel / requiredLevel,
                             1.0
                     );
 
-            earnedWeight += skillImportance * levelRatio;
+            earnedWeight +=
+                    skillImportance * levelRatio;
         }
 
         if (totalWeight == 0) {
             return 0.0;
         }
 
-        return (earnedWeight / totalWeight) * SKILL_WEIGHT;
+        return (earnedWeight / totalWeight)
+                * SKILL_WEIGHT;
+    }
+
+    private double calculateExperienceScore(
+            CandidateProfile candidate,
+            JobPosting jobPosting
+    ) {
+
+        Integer requiredYears =
+                jobPosting.getMinimumExperienceYears();
+
+        /*
+         * İlanda deneyim şartı yoksa
+         * aday bu kriteri tamamen karşılamış kabul edilir.
+         */
+        if (requiredYears == null || requiredYears <= 0) {
+            return EXPERIENCE_WEIGHT;
+        }
+
+        List<Experience> experiences =
+                experienceRepository
+                        .findByCandidateProfileId(
+                                candidate.getId()
+                        );
+
+        if (experiences.isEmpty()) {
+            return 0.0;
+        }
+
+        long totalMonths = 0;
+
+        for (Experience experience : experiences) {
+
+            LocalDate startDate =
+                    experience.getStartDate();
+
+            LocalDate endDate =
+                    experience.isCurrentlyWorking()
+                            ? LocalDate.now()
+                            : experience.getEndDate();
+
+            if (startDate == null || endDate == null) {
+                continue;
+            }
+
+            long months =
+                    ChronoUnit.MONTHS.between(
+                            startDate,
+                            endDate
+                    );
+
+            if (months > 0) {
+                totalMonths += months;
+            }
+        }
+
+        double candidateYears =
+                totalMonths / 12.0;
+
+        double experienceRatio =
+                Math.min(
+                        candidateYears / requiredYears,
+                        1.0
+                );
+
+        return experienceRatio
+                * EXPERIENCE_WEIGHT;
     }
 
     private double calculateWorkModelScore(
@@ -154,15 +234,6 @@ public class MatchScoreCalculator {
             JobPosting jobPosting
     ) {
 
-        /*
-         * Adayın minimum beklentisini esas alıyoruz.
-         *
-         * Örnek:
-         * Candidate minimum = 50.000
-         * Job maximum = 70.000
-         *
-         * Firma adayın beklentisini karşılayabiliyor.
-         */
         if (candidate.getExpectedMinSalary() == null) {
             return 0.0;
         }
@@ -181,11 +252,6 @@ public class MatchScoreCalculator {
             return 0.0;
         }
 
-        /*
-         * maximumSalary girilmemiş ama
-         * minimumSalary aday beklentisinin üzerindeyse
-         * yine uyumlu kabul ediyoruz.
-         */
         if (jobPosting.getMinimumSalary() != null
                 && jobPosting.getMinimumSalary()
                 .compareTo(candidateMinimum) >= 0) {
@@ -201,10 +267,6 @@ public class MatchScoreCalculator {
             JobPosting jobPosting
     ) {
 
-        /*
-         * İlan tamamen REMOTE ise
-         * şehir uyumuna gerek yok.
-         */
         if (jobPosting.getWorkModel()
                 == WorkModel.REMOTE) {
 
@@ -224,10 +286,6 @@ public class MatchScoreCalculator {
             return LOCATION_WEIGHT;
         }
 
-        /*
-         * Şehir farklı ama ülke aynıysa
-         * lokasyon puanının yarısını veriyoruz.
-         */
         String candidateCountry =
                 candidate.getCountry();
 
