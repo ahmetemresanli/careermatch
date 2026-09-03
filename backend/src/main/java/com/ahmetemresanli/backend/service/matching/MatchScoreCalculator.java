@@ -26,26 +26,17 @@ public class MatchScoreCalculator {
             JobPosting jobPosting
     ) {
 
-        double skillScore =
-                calculateSkillScore(candidate, jobPosting);
+        double skillScore = calculateSkillScore(candidate, jobPosting);
 
-        double workModelScore =
-                calculateWorkModelScore(candidate, jobPosting);
+        double workModelScore = calculateWorkModelScore(candidate, jobPosting);
 
-        double salaryScore =
-                calculateSalaryScore(candidate, jobPosting);
+        double salaryScore = calculateSalaryScore(candidate, jobPosting);
 
-        double locationScore =
-                calculateLocationScore(candidate, jobPosting);
+        double locationScore = calculateLocationScore(candidate, jobPosting);
 
-        double totalScore =
-                skillScore
-                        + workModelScore
-                        + salaryScore
-                        + locationScore;
+        double totalScore = skillScore + workModelScore + salaryScore + locationScore;
 
-        return BigDecimal.valueOf(totalScore)
-                .setScale(2, RoundingMode.HALF_UP);
+        return BigDecimal.valueOf(totalScore).setScale(2, RoundingMode.HALF_UP);
     }
 
     private double calculateSkillScore(
@@ -106,15 +97,9 @@ public class MatchScoreCalculator {
                 continue;
             }
 
-            int candidateLevel =
-                    getSkillLevelValue(
-                            candidateSkill.getSkillLevel()
-                    );
+            int candidateLevel = getSkillLevelValue(candidateSkill.getSkillLevel());
 
-            int requiredLevel =
-                    getSkillLevelValue(
-                            jobSkill.getRequiredSkillLevel()
-                    );
+            int requiredLevel = getSkillLevelValue(jobSkill.getRequiredSkillLevel());
 
             /*
              * Örnek:
@@ -129,22 +114,19 @@ public class MatchScoreCalculator {
              *
              * 4 / 3 > 1 olduğu için maksimum 1 alınır.
              */
-            double levelRatio =
-                    Math.min(
+            double levelRatio = Math.min(
                             (double) candidateLevel / requiredLevel,
                             1.0
                     );
 
-            earnedWeight +=
-                    skillImportance * levelRatio;
+            earnedWeight += skillImportance * levelRatio;
         }
 
         if (totalWeight == 0) {
             return 0.0;
         }
 
-        return (earnedWeight / totalWeight)
-                * SKILL_WEIGHT;
+        return (earnedWeight / totalWeight) * SKILL_WEIGHT;
     }
 
     private double calculateWorkModelScore(

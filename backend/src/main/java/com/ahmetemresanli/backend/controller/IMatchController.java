@@ -28,4 +28,17 @@ public interface IMatchController {
     calculateMatchesForCandidate(
             Long candidateProfileId
     );
+
+    ResponseEntity<List<MatchResponse>>
+    calculateMatchesForJobPosting(
+            Long jobPostingId
+    );
+
+    ResponseEntity<List<MatchResponse>> getCandidateRecommendations(
+            Long candidateProfileId
+    );
+
+    ResponseEntity<List<MatchResponse>> getJobPostingRecommendations(
+            Long jobPostingId
+    );
 }

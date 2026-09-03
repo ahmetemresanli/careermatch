@@ -24,4 +24,16 @@ public interface IMatchService {
     List<Match> getMatchesByJobPostingId(
             Long jobPostingId
     );
+
+    List<Match> calculateMatchesForJobPosting(
+            Long jobPostingId
+    );
+
+    List<Match> getCandidateRecommendations(
+            Long candidateProfileId
+    );
+
+    List<Match> getJobPostingRecommendations(
+            Long jobPostingId
+    );
 }

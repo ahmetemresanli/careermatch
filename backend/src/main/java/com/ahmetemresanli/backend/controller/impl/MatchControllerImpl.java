@@ -112,4 +112,53 @@ public class MatchControllerImpl implements IMatchController {
 
         return ResponseEntity.ok(responses);
     }
+
+    @Override
+    @PostMapping("/job/{jobPostingId}/calculate-all")
+    public ResponseEntity<List<MatchResponse>>
+    calculateMatchesForJobPosting(@PathVariable Long jobPostingId) {
+
+        List<MatchResponse> responses =
+                matchService
+                        .calculateMatchesForJobPosting(
+                                jobPostingId
+                        )
+                        .stream()
+                        .map(MatchMapper::toResponse)
+                        .toList();
+
+        return ResponseEntity.ok(responses);
+    }
+
+    @Override
+    @GetMapping("/candidate/{candidateProfileId}/recommendations")
+    public ResponseEntity<List<MatchResponse>> getCandidateRecommendations(
+            @PathVariable Long candidateProfileId
+    ) {
+
+        List<MatchResponse> responses =
+                matchService
+                        .getCandidateRecommendations(candidateProfileId)
+                        .stream()
+                        .map(MatchMapper::toResponse)
+                        .toList();
+
+        return ResponseEntity.ok(responses);
+    }
+
+    @Override
+    @GetMapping("/job/{jobPostingId}/recommendations")
+    public ResponseEntity<List<MatchResponse>> getJobPostingRecommendations(
+            @PathVariable Long jobPostingId
+    ) {
+
+        List<MatchResponse> responses =
+                matchService
+                        .getJobPostingRecommendations(jobPostingId)
+                        .stream()
+                        .map(MatchMapper::toResponse)
+                        .toList();
+
+        return ResponseEntity.ok(responses);
+    }
 }

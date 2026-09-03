@@ -3,6 +3,7 @@ package com.ahmetemresanli.backend.service.impl;
 import com.ahmetemresanli.backend.entity.CandidateProfile;
 import com.ahmetemresanli.backend.entity.JobPosting;
 import com.ahmetemresanli.backend.entity.Match;
+import com.ahmetemresanli.backend.enums.JobSearchStatus;
 import com.ahmetemresanli.backend.enums.JobStatus;
 import com.ahmetemresanli.backend.enums.MatchStatus;
 import com.ahmetemresanli.backend.exception.BusinessException;
@@ -21,6 +22,9 @@ import java.util.List;
 
 @Service
 public class MatchServiceImpl implements IMatchService {
+
+    private static final BigDecimal MIN_RECOMMENDATION_SCORE =
+            BigDecimal.valueOf(60);
 
     private final MatchRepository matchRepository;
     private final CandidateProfileRepository candidateProfileRepository;
@@ -65,7 +69,6 @@ public class MatchServiceImpl implements IMatchService {
                         );
 
         if (jobPosting.getStatus() != JobStatus.PUBLISHED) {
-
             throw new BusinessException(
                     "Match can only be calculated for published job postings"
             );
@@ -85,11 +88,6 @@ public class MatchServiceImpl implements IMatchService {
                         )
                         .orElseGet(Match::new);
 
-        /*
-         * Yeni Match ise candidate ve job bağlantısını kur.
-         * Eski Match ise bunlar zaten mevcut ama tekrar set etmek
-         * herhangi bir problem oluşturmaz.
-         */
         match.setCandidateProfile(candidateProfile);
         match.setJobPosting(jobPosting);
         match.setScore(score);
@@ -176,11 +174,113 @@ public class MatchServiceImpl implements IMatchService {
                         match.getStatus()
                                 == MatchStatus.ACTIVE
                 )
+                .filter(match ->
+                        match.getScore().compareTo(
+                                MIN_RECOMMENDATION_SCORE
+                        ) >= 0
+                )
                 .sorted(
                         Comparator.comparing(
                                 Match::getScore
                         ).reversed()
                 )
                 .toList();
+    }
+
+    @Override
+    @Transactional
+    public List<Match> calculateMatchesForJobPosting(
+            Long jobPostingId
+    ) {
+
+        JobPosting jobPosting =
+                jobPostingRepository.findById(jobPostingId)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Job posting not found"
+                                )
+                        );
+
+        if (jobPosting.getStatus() != JobStatus.PUBLISHED) {
+            throw new BusinessException(
+                    "Candidate recommendations can only be calculated for published job postings"
+            );
+        }
+
+        List<CandidateProfile> candidates =
+                candidateProfileRepository.findAll();
+
+        return candidates.stream()
+
+                .filter(CandidateProfile::isVisibleToRecruiters)
+
+                .filter(candidate ->
+                        candidate.getJobSearchStatus()
+                                != JobSearchStatus.NOT_LOOKING
+                )
+
+                .map(candidate ->
+                        calculateAndSaveMatch(
+                                candidate.getId(),
+                                jobPostingId
+                        )
+                )
+
+                .filter(match ->
+                        match.getStatus()
+                                == MatchStatus.ACTIVE
+                )
+
+                .filter(match ->
+                        match.getScore().compareTo(
+                                MIN_RECOMMENDATION_SCORE
+                        ) >= 0
+                )
+
+                .sorted(
+                        Comparator.comparing(
+                                Match::getScore
+                        ).reversed()
+                )
+
+                .toList();
+    }
+
+    @Override
+    public List<Match> getCandidateRecommendations(
+            Long candidateProfileId
+    ) {
+
+        if (!candidateProfileRepository.existsById(candidateProfileId)) {
+            throw new ResourceNotFoundException(
+                    "Candidate profile not found"
+            );
+        }
+
+        return matchRepository
+                .findByCandidateProfileIdAndStatusAndScoreGreaterThanEqualOrderByScoreDesc(
+                        candidateProfileId,
+                        MatchStatus.ACTIVE,
+                        MIN_RECOMMENDATION_SCORE
+                );
+    }
+
+    @Override
+    public List<Match> getJobPostingRecommendations(
+            Long jobPostingId
+    ) {
+
+        if (!jobPostingRepository.existsById(jobPostingId)) {
+            throw new ResourceNotFoundException(
+                    "Job posting not found"
+            );
+        }
+
+        return matchRepository
+                .findByJobPostingIdAndStatusAndScoreGreaterThanEqualOrderByScoreDesc(
+                        jobPostingId,
+                        MatchStatus.ACTIVE,
+                        MIN_RECOMMENDATION_SCORE
+                );
     }
 }
