@@ -2,7 +2,9 @@ package com.ahmetemresanli.backend.mapper;
 
 import com.ahmetemresanli.backend.dto.request.ExperienceCreateRequest;
 import com.ahmetemresanli.backend.dto.response.ExperienceResponse;
+import com.ahmetemresanli.backend.entity.EmploymentVerification;
 import com.ahmetemresanli.backend.entity.Experience;
+import com.ahmetemresanli.backend.enums.VerificationStatus;
 
 public final class ExperienceMapper {
 
@@ -54,6 +56,7 @@ public final class ExperienceMapper {
         );
 
         if (experience.getCandidateProfile() != null) {
+
             response.setCandidateProfileId(
                     experience
                             .getCandidateProfile()
@@ -91,6 +94,44 @@ public final class ExperienceMapper {
 
         response.setUpdatedAt(
                 experience.getUpdatedAt()
+        );
+
+        return response;
+    }
+
+    public static ExperienceResponse toResponse(
+            Experience experience,
+            EmploymentVerification verification
+    ) {
+
+        ExperienceResponse response =
+                toResponse(experience);
+
+        if (verification == null) {
+
+            response.setVerified(false);
+            response.setVerificationStatus(null);
+            response.setVerificationType(null);
+            response.setVerifiedAt(null);
+
+            return response;
+        }
+
+        response.setVerificationStatus(
+                verification.getStatus()
+        );
+
+        response.setVerificationType(
+                verification.getVerificationType()
+        );
+
+        response.setVerified(
+                verification.getStatus()
+                        == VerificationStatus.VERIFIED
+        );
+
+        response.setVerifiedAt(
+                verification.getVerifiedAt()
         );
 
         return response;

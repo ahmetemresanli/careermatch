@@ -4,8 +4,10 @@ import com.ahmetemresanli.backend.controller.IEducationController;
 import com.ahmetemresanli.backend.dto.request.EducationCreateRequest;
 import com.ahmetemresanli.backend.dto.response.EducationResponse;
 import com.ahmetemresanli.backend.entity.Education;
+import com.ahmetemresanli.backend.entity.EducationVerification;
 import com.ahmetemresanli.backend.mapper.EducationMapper;
 import com.ahmetemresanli.backend.service.IEducationService;
+import com.ahmetemresanli.backend.service.IEducationVerificationService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,10 +22,16 @@ public class EducationControllerImpl
 
     private final IEducationService educationService;
 
+    private final IEducationVerificationService
+            educationVerificationService;
+
     public EducationControllerImpl(
-            IEducationService educationService
+            IEducationService educationService,
+            IEducationVerificationService educationVerificationService
     ) {
         this.educationService = educationService;
+        this.educationVerificationService =
+                educationVerificationService;
     }
 
     @Override
@@ -42,11 +50,16 @@ public class EducationControllerImpl
                         education
                 );
 
+        /*
+         * Yeni oluşturulan education'ın henüz
+         * verification kaydı yok.
+         */
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(
                         EducationMapper.toResponse(
-                                savedEducation
+                                savedEducation,
+                                null
                         )
                 );
     }
@@ -60,8 +73,16 @@ public class EducationControllerImpl
         Education education =
                 educationService.getEducationById(id);
 
+        EducationVerification verification =
+                educationVerificationService
+                        .getEffectiveVerification(id)
+                        .orElse(null);
+
         return ResponseEntity.ok(
-                EducationMapper.toResponse(education)
+                EducationMapper.toResponse(
+                        education,
+                        verification
+                )
         );
     }
 
@@ -78,7 +99,20 @@ public class EducationControllerImpl
                                 candidateProfileId
                         )
                         .stream()
-                        .map(EducationMapper::toResponse)
+                        .map(education -> {
+
+                            EducationVerification verification =
+                                    educationVerificationService
+                                            .getEffectiveVerification(
+                                                    education.getId()
+                                            )
+                                            .orElse(null);
+
+                            return EducationMapper.toResponse(
+                                    education,
+                                    verification
+                            );
+                        })
                         .toList();
 
         return ResponseEntity.ok(responses);

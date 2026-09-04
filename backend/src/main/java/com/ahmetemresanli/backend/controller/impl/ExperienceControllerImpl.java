@@ -3,8 +3,10 @@ package com.ahmetemresanli.backend.controller.impl;
 import com.ahmetemresanli.backend.controller.IExperienceController;
 import com.ahmetemresanli.backend.dto.request.ExperienceCreateRequest;
 import com.ahmetemresanli.backend.dto.response.ExperienceResponse;
+import com.ahmetemresanli.backend.entity.EmploymentVerification;
 import com.ahmetemresanli.backend.entity.Experience;
 import com.ahmetemresanli.backend.mapper.ExperienceMapper;
+import com.ahmetemresanli.backend.service.IEmploymentVerificationService;
 import com.ahmetemresanli.backend.service.IExperienceService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -20,10 +22,16 @@ public class ExperienceControllerImpl
 
     private final IExperienceService experienceService;
 
+    private final IEmploymentVerificationService
+            employmentVerificationService;
+
     public ExperienceControllerImpl(
-            IExperienceService experienceService
+            IExperienceService experienceService,
+            IEmploymentVerificationService employmentVerificationService
     ) {
         this.experienceService = experienceService;
+        this.employmentVerificationService =
+                employmentVerificationService;
     }
 
     @Override
@@ -46,7 +54,8 @@ public class ExperienceControllerImpl
                 .status(HttpStatus.CREATED)
                 .body(
                         ExperienceMapper.toResponse(
-                                savedExperience
+                                savedExperience,
+                                null
                         )
                 );
     }
@@ -60,8 +69,16 @@ public class ExperienceControllerImpl
         Experience experience =
                 experienceService.getExperienceById(id);
 
+        EmploymentVerification verification =
+                employmentVerificationService
+                        .getEffectiveVerification(id)
+                        .orElse(null);
+
         return ResponseEntity.ok(
-                ExperienceMapper.toResponse(experience)
+                ExperienceMapper.toResponse(
+                        experience,
+                        verification
+                )
         );
     }
 
@@ -78,7 +95,20 @@ public class ExperienceControllerImpl
                                 candidateProfileId
                         )
                         .stream()
-                        .map(ExperienceMapper::toResponse)
+                        .map(experience -> {
+
+                            EmploymentVerification verification =
+                                    employmentVerificationService
+                                            .getEffectiveVerification(
+                                                    experience.getId()
+                                            )
+                                            .orElse(null);
+
+                            return ExperienceMapper.toResponse(
+                                    experience,
+                                    verification
+                            );
+                        })
                         .toList();
 
         return ResponseEntity.ok(responses);

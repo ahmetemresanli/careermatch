@@ -1,5 +1,8 @@
 package com.ahmetemresanli.backend.dto.response;
 
+import com.ahmetemresanli.backend.enums.EmploymentVerificationType;
+import com.ahmetemresanli.backend.enums.VerificationStatus;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -17,6 +20,12 @@ public class ExperienceResponse {
     private boolean currentlyWorking;
 
     private String description;
+
+    // Verification bilgileri
+    private boolean verified;
+    private VerificationStatus verificationStatus;
+    private EmploymentVerificationType verificationType;
+    private LocalDateTime verifiedAt;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -86,6 +95,42 @@ public class ExperienceResponse {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public boolean isVerified() {
+        return verified;
+    }
+
+    public void setVerified(boolean verified) {
+        this.verified = verified;
+    }
+
+    public VerificationStatus getVerificationStatus() {
+        return verificationStatus;
+    }
+
+    public void setVerificationStatus(
+            VerificationStatus verificationStatus
+    ) {
+        this.verificationStatus = verificationStatus;
+    }
+
+    public EmploymentVerificationType getVerificationType() {
+        return verificationType;
+    }
+
+    public void setVerificationType(
+            EmploymentVerificationType verificationType
+    ) {
+        this.verificationType = verificationType;
+    }
+
+    public LocalDateTime getVerifiedAt() {
+        return verifiedAt;
+    }
+
+    public void setVerifiedAt(LocalDateTime verifiedAt) {
+        this.verifiedAt = verifiedAt;
     }
 
     public LocalDateTime getCreatedAt() {

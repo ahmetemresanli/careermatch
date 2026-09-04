@@ -60,8 +60,7 @@ public class MatchScoreCalculator {
                         + salaryScore
                         + locationScore;
 
-        return BigDecimal.valueOf(totalScore)
-                .setScale(2, RoundingMode.HALF_UP);
+        return BigDecimal.valueOf(totalScore).setScale(2, RoundingMode.HALF_UP);
     }
 
     private double calculateSkillScore(
