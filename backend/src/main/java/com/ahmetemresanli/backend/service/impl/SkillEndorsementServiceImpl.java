@@ -10,13 +10,19 @@ import com.ahmetemresanli.backend.exception.ResourceNotFoundException;
 import com.ahmetemresanli.backend.repository.CandidateProfileRepository;
 import com.ahmetemresanli.backend.repository.CandidateSkillRepository;
 import com.ahmetemresanli.backend.repository.SkillEndorsementRepository;
+import com.ahmetemresanli.backend.repository.UserRepository;
+import com.ahmetemresanli.backend.entity.User;
 import com.ahmetemresanli.backend.service.ISkillEndorsementService;
+import com.ahmetemresanli.backend.service.IMailService;
+import com.ahmetemresanli.backend.service.INotificationService;
+import com.ahmetemresanli.backend.enums.NotificationType;
+import com.ahmetemresanli.backend.security.SecureTokenGenerator;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class SkillEndorsementServiceImpl
@@ -27,15 +33,27 @@ public class SkillEndorsementServiceImpl
     private final SkillEndorsementRepository skillEndorsementRepository;
     private final CandidateSkillRepository candidateSkillRepository;
     private final CandidateProfileRepository candidateProfileRepository;
+    private final IMailService mailService;
+    private final INotificationService notificationService;
+    private final String publicBaseUrl;
+    private final UserRepository userRepository;
 
     public SkillEndorsementServiceImpl(
             SkillEndorsementRepository skillEndorsementRepository,
             CandidateSkillRepository candidateSkillRepository,
-            CandidateProfileRepository candidateProfileRepository
+            CandidateProfileRepository candidateProfileRepository,
+            IMailService mailService,
+            INotificationService notificationService,
+            @Value("${app.public-base-url:http://localhost:8080}") String publicBaseUrl,
+            UserRepository userRepository
     ) {
         this.skillEndorsementRepository = skillEndorsementRepository;
         this.candidateSkillRepository = candidateSkillRepository;
         this.candidateProfileRepository = candidateProfileRepository;
+        this.mailService = mailService;
+        this.notificationService = notificationService;
+        this.publicBaseUrl = publicBaseUrl;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -108,7 +126,7 @@ public class SkillEndorsementServiceImpl
                 )
                 .isPresent()) {
 
-            throw new BusinessException(
+            throw new com.ahmetemresanli.backend.exception.DuplicateResourceException(
                     "This person has already received an endorsement request for this skill"
             );
         }
@@ -142,9 +160,7 @@ public class SkillEndorsementServiceImpl
                 SkillEndorsementStatus.PENDING
         );
 
-        endorsement.setToken(
-                UUID.randomUUID().toString()
-        );
+        endorsement.setToken(SecureTokenGenerator.generate());
 
         endorsement.setExpiresAt(
                 LocalDateTime.now()
@@ -153,9 +169,10 @@ public class SkillEndorsementServiceImpl
                         )
         );
 
-        return skillEndorsementRepository.save(
-                endorsement
-        );
+        SkillEndorsement saved = skillEndorsementRepository.save(endorsement);
+        mailService.send(saved.getEndorserEmail(), "CareerMatch skill endorsement request",
+                "Respond to the endorsement request: " + publicBaseUrl + "/api/skill-endorsements/endorse?token=" + saved.getToken());
+        return saved;
     }
 
     @Override
@@ -182,9 +199,11 @@ public class SkillEndorsementServiceImpl
                 LocalDateTime.now()
         );
 
-        return skillEndorsementRepository.save(
-                endorsement
-        );
+        SkillEndorsement saved = skillEndorsementRepository.save(endorsement);
+        notificationService.create(saved.getCandidateSkill().getCandidateProfile().getUser().getId(),
+                NotificationType.VERIFICATION, "Skill endorsed",
+                saved.getCandidateSkill().getSkill().getName() + " was endorsed", "candidateSkillId=" + saved.getCandidateSkill().getId());
+        return saved;
     }
 
     @Override
@@ -241,6 +260,32 @@ public class SkillEndorsementServiceImpl
                 .findByCandidateSkillIdOrderByCreatedAtDesc(
                         candidateSkillId
                 );
+    }
+
+    @Override
+    @Transactional
+    public SkillEndorsement endorseDirectly(Long candidateSkillId, Long endorserUserId,
+                                             ReferenceRelation relation, String comment) {
+        CandidateSkill skill = candidateSkillRepository.findById(candidateSkillId)
+                .orElseThrow(() -> new ResourceNotFoundException("Candidate skill not found"));
+        User endorser = userRepository.findById(endorserUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        if (skill.getCandidateProfile().getUser().getId().equals(endorserUserId)) {
+            throw new BusinessException("Candidate cannot endorse their own skill");
+        }
+        if (skillEndorsementRepository.existsByCandidateSkillIdAndEndorserUserId(candidateSkillId, endorserUserId)) {
+            throw new com.ahmetemresanli.backend.exception.DuplicateResourceException("User already endorsed this candidate skill");
+        }
+        SkillEndorsement endorsement = new SkillEndorsement();
+        endorsement.setCandidateSkill(skill); endorsement.setEndorserUser(endorser);
+        endorsement.setEndorserName(endorser.getEmail()); endorsement.setEndorserEmail(endorser.getEmail());
+        endorsement.setRelation(relation); endorsement.setEndorsementComment(comment == null ? null : comment.trim());
+        endorsement.setStatus(SkillEndorsementStatus.ENDORSED); endorsement.setRespondedAt(LocalDateTime.now());
+        endorsement.setToken(SecureTokenGenerator.generate()); endorsement.setExpiresAt(LocalDateTime.now());
+        SkillEndorsement saved = skillEndorsementRepository.save(endorsement);
+        notificationService.create(skill.getCandidateProfile().getUser().getId(), NotificationType.VERIFICATION,
+                "Skill endorsed", skill.getSkill().getName() + " was endorsed", "candidateSkillId=" + candidateSkillId);
+        return saved;
     }
 
     @Override

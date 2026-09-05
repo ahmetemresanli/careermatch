@@ -1,6 +1,7 @@
 package com.ahmetemresanli.backend.controller;
 
 import com.ahmetemresanli.backend.dto.request.CandidateProfileCreateRequest;
+import com.ahmetemresanli.backend.dto.request.CandidateProfileUpdateRequest;
 import com.ahmetemresanli.backend.dto.response.CandidateProfileResponse;
 import org.springframework.http.ResponseEntity;
 
@@ -23,4 +24,6 @@ public interface ICandidateProfileController {
 
     ResponseEntity<List<CandidateProfileResponse>>
     getAllCandidateProfiles();
+
+    ResponseEntity<CandidateProfileResponse> updateCandidateProfile(Long id, CandidateProfileUpdateRequest request);
 }

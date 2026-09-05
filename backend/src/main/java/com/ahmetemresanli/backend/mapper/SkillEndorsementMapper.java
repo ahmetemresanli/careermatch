@@ -77,9 +77,7 @@ public final class SkillEndorsementMapper {
                 endorsement.getStatus()
         );
 
-        response.setToken(
-                endorsement.getToken()
-        );
+        response.setToken(null);
 
         response.setExpiresAt(
                 endorsement.getExpiresAt()

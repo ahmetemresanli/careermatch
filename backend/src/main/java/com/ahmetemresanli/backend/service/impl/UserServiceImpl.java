@@ -6,6 +6,7 @@ import com.ahmetemresanli.backend.exception.ResourceNotFoundException;
 import com.ahmetemresanli.backend.repository.UserRepository;
 import com.ahmetemresanli.backend.service.IUserService;
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 
@@ -13,18 +14,32 @@ import java.util.List;
 public class UserServiceImpl implements IUserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(UserRepository userRepository) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
     public User createUser(User user) {
 
-        if (userRepository.existsByEmail(user.getEmail())) {
+        String email = user.getEmail().trim().toLowerCase();
+        if (userRepository.findByEmailIgnoreCase(email).isPresent()) {
             throw new DuplicateResourceException(
                     "Email already in use"
             );
+        }
+
+        user.setEmail(email);
+        if (user.getRecoveryEmail() != null && !user.getRecoveryEmail().isBlank()) {
+            user.setRecoveryEmail(user.getRecoveryEmail().trim().toLowerCase());
+        }
+        if (user.getPasswordHash() == null || user.getPasswordHash().isBlank()) {
+            throw new com.ahmetemresanli.backend.exception.BusinessException("Password cannot be empty");
+        }
+        if (!user.getPasswordHash().startsWith("$2")) {
+            user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
         }
 
         return userRepository.save(user);

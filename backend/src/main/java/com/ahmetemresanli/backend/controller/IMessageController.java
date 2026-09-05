@@ -25,18 +25,15 @@ public interface IMessageController {
 
     ResponseEntity<List<MessageResponse>>
     getUnreadMessages(
-            Long conversationId,
-            Long readerUserId
+            Long conversationId
     );
 
     ResponseEntity<UnreadMessageCountResponse>
     getUnreadMessageCount(
-            Long conversationId,
-            Long readerUserId
+            Long conversationId
     );
 
     ResponseEntity<MessageResponse> markMessageAsRead(
-            Long messageId,
-            Long readerUserId
+            Long messageId
     );
 }

@@ -2,6 +2,7 @@ package com.ahmetemresanli.backend.controller.impl;
 
 import com.ahmetemresanli.backend.controller.ICandidateProfileController;
 import com.ahmetemresanli.backend.dto.request.CandidateProfileCreateRequest;
+import com.ahmetemresanli.backend.dto.request.CandidateProfileUpdateRequest;
 import com.ahmetemresanli.backend.dto.response.CandidateProfileResponse;
 import com.ahmetemresanli.backend.entity.CandidateProfile;
 import com.ahmetemresanli.backend.mapper.CandidateProfileMapper;
@@ -9,6 +10,7 @@ import com.ahmetemresanli.backend.service.ICandidateProfileService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,6 +30,7 @@ public class CandidateProfileControllerImpl
 
     @Override
     @PostMapping("/user/{userId}")
+    @PreAuthorize("hasRole('CANDIDATE') and @access.isSelf(#userId)")
     public ResponseEntity<CandidateProfileResponse>
     createCandidateProfile(
             @PathVariable Long userId,
@@ -55,6 +58,7 @@ public class CandidateProfileControllerImpl
 
     @Override
     @GetMapping("/{id}")
+    @PreAuthorize("@access.ownsCandidate(#id) or hasAnyRole('COMPANY','ADMIN')")
     public ResponseEntity<CandidateProfileResponse>
     getCandidateProfileById(
             @PathVariable Long id
@@ -73,6 +77,7 @@ public class CandidateProfileControllerImpl
 
     @Override
     @GetMapping("/user/{userId}")
+    @PreAuthorize("@access.isSelf(#userId) or hasAnyRole('COMPANY','ADMIN')")
     public ResponseEntity<CandidateProfileResponse>
     getCandidateProfileByUserId(
             @PathVariable Long userId
@@ -91,6 +96,7 @@ public class CandidateProfileControllerImpl
 
     @Override
     @GetMapping
+    @PreAuthorize("hasAnyRole('COMPANY','ADMIN')")
     public ResponseEntity<List<CandidateProfileResponse>>
     getAllCandidateProfiles() {
 
@@ -102,5 +108,15 @@ public class CandidateProfileControllerImpl
                         .toList();
 
         return ResponseEntity.ok(responses);
+    }
+
+    @Override
+    @PutMapping("/{id}")
+    @PreAuthorize("@access.ownsCandidate(#id)")
+    public ResponseEntity<CandidateProfileResponse> updateCandidateProfile(
+            @PathVariable Long id, @Valid @RequestBody CandidateProfileUpdateRequest request) {
+        CandidateProfile profile = candidateProfileService.getCandidateProfileById(id);
+        CandidateProfileMapper.applyUpdate(profile, request);
+        return ResponseEntity.ok(CandidateProfileMapper.toResponse(candidateProfileService.updateCandidateProfile(id, profile)));
     }
 }

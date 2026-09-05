@@ -1,0 +1,4 @@
+package com.ahmetemresanli.backend.controller.impl;
+import com.ahmetemresanli.backend.controller.ICompanyDataController;import com.ahmetemresanli.backend.dto.response.*;import com.ahmetemresanli.backend.service.ICompanyDataService;import org.springframework.http.ResponseEntity;import org.springframework.web.bind.annotation.*;
+@RestController @RequestMapping("/api/companies")
+public class CompanyDataControllerImpl implements ICompanyDataController {private final ICompanyDataService service;public CompanyDataControllerImpl(ICompanyDataService service){this.service=service;}@Override @GetMapping("/{id}/reviews") public ResponseEntity<CompanyReviewsResponse> reviews(@PathVariable Long id){return ResponseEntity.ok(service.reviews(id));}@Override @GetMapping("/{id}/news") public ResponseEntity<CompanyNewsResponse> news(@PathVariable Long id){return ResponseEntity.ok(service.news(id));}}

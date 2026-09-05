@@ -114,12 +114,11 @@ public class JobPostingSpecification {
             // Minimum Salary
             if (minimumSalary != null) {
 
-                predicates.add(
-                        criteriaBuilder.greaterThanOrEqualTo(
-                                root.get("maximumSalary"),
-                                minimumSalary
-                        )
-                );
+                predicates.add(criteriaBuilder.or(
+                        criteriaBuilder.greaterThanOrEqualTo(root.get("maximumSalary"), minimumSalary),
+                        criteriaBuilder.and(criteriaBuilder.isNull(root.get("maximumSalary")),
+                                criteriaBuilder.greaterThanOrEqualTo(root.get("minimumSalary"), minimumSalary))
+                ));
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));

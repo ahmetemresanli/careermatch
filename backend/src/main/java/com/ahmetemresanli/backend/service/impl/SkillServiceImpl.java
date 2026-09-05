@@ -30,7 +30,7 @@ public class SkillServiceImpl implements ISkillService {
 
         String skillName = skill.getName().trim();
 
-        if (skillRepository.existsByName(skillName)) {
+        if (skillRepository.findByNameIgnoreCase(skillName).isPresent()) {
             throw new DuplicateResourceException(
                     "Skill already exists"
             );

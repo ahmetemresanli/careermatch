@@ -1,6 +1,7 @@
 package com.ahmetemresanli.backend.mapper;
 
 import com.ahmetemresanli.backend.dto.request.CandidateProfileCreateRequest;
+import com.ahmetemresanli.backend.dto.request.CandidateProfileUpdateRequest;
 import com.ahmetemresanli.backend.dto.response.CandidateProfileResponse;
 import com.ahmetemresanli.backend.entity.CandidateProfile;
 
@@ -108,5 +109,21 @@ public final class CandidateProfileMapper {
         response.setUpdatedAt(candidateProfile.getUpdatedAt());
 
         return response;
+    }
+
+    public static void applyUpdate(CandidateProfile target, CandidateProfileUpdateRequest request) {
+        if (request.getFirstName() != null) target.setFirstName(request.getFirstName().trim());
+        if (request.getLastName() != null) target.setLastName(request.getLastName().trim());
+        if (request.getAbout() != null) target.setAbout(request.getAbout());
+        if (request.getCity() != null) target.setCity(request.getCity());
+        if (request.getCountry() != null) target.setCountry(request.getCountry());
+        if (request.getGithubUrl() != null) target.setGithubUrl(request.getGithubUrl());
+        if (request.getLinkedinUrl() != null) target.setLinkedinUrl(request.getLinkedinUrl());
+        if (request.getWebsiteUrl() != null) target.setWebsiteUrl(request.getWebsiteUrl());
+        if (request.getJobSearchStatus() != null) target.setJobSearchStatus(request.getJobSearchStatus());
+        if (request.getVisibleToRecruiters() != null) target.setVisibleToRecruiters(request.getVisibleToRecruiters());
+        if (request.getExpectedMinSalary() != null) target.setExpectedMinSalary(request.getExpectedMinSalary());
+        if (request.getExpectedMaxSalary() != null) target.setExpectedMaxSalary(request.getExpectedMaxSalary());
+        if (request.getPreferredWorkModel() != null) target.setPreferredWorkModel(request.getPreferredWorkModel());
     }
 }

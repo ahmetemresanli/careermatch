@@ -11,6 +11,7 @@ import com.ahmetemresanli.backend.service.IEducationVerificationService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,6 +31,7 @@ public class EducationVerificationControllerImpl
 
     @Override
     @PostMapping("/education/{educationId}/email")
+    @PreAuthorize("@access.ownsEducation(#educationId)")
     public ResponseEntity<EducationVerificationResponse>
     requestEmailVerification(
             @PathVariable Long educationId,
@@ -55,6 +57,7 @@ public class EducationVerificationControllerImpl
 
     @Override
     @PostMapping("/education/{educationId}/document")
+    @PreAuthorize("@access.ownsEducation(#educationId)")
     public ResponseEntity<EducationVerificationResponse>
     requestDocumentVerification(
             @PathVariable Long educationId,
@@ -98,6 +101,7 @@ public class EducationVerificationControllerImpl
 
     @Override
     @PutMapping("/{verificationId}/approve")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EducationVerificationResponse>
     approveDocument(
             @PathVariable Long verificationId
@@ -118,6 +122,7 @@ public class EducationVerificationControllerImpl
 
     @Override
     @PutMapping("/{verificationId}/reject")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EducationVerificationResponse>
     rejectDocument(
             @PathVariable Long verificationId,
@@ -141,6 +146,7 @@ public class EducationVerificationControllerImpl
 
     @Override
     @GetMapping("/{id}")
+    @PreAuthorize("@access.canAccessEducationVerification(#id)")
     public ResponseEntity<EducationVerificationResponse>
     getVerificationById(
             @PathVariable Long id
@@ -156,6 +162,7 @@ public class EducationVerificationControllerImpl
 
     @Override
     @GetMapping("/education/{educationId}")
+    @PreAuthorize("@access.ownsEducation(#educationId) or hasRole('ADMIN')")
     public ResponseEntity<List<EducationVerificationResponse>>
     getVerificationsByEducation(
             @PathVariable Long educationId

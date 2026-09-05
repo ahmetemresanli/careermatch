@@ -29,4 +29,6 @@ public interface EmploymentVerificationRepository
     findFirstByExperienceIdOrderByCreatedAtDesc(
             Long experienceId
     );
+
+    List<EmploymentVerification> findByStatusOrderByCreatedAtAsc(VerificationStatus status);
 }

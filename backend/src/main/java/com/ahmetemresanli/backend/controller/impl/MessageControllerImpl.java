@@ -10,6 +10,8 @@ import com.ahmetemresanli.backend.service.IMessageService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import com.ahmetemresanli.backend.security.AccessControlService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,15 +22,19 @@ public class MessageControllerImpl
         implements IMessageController {
 
     private final IMessageService messageService;
+    private final AccessControlService access;
 
     public MessageControllerImpl(
-            IMessageService messageService
+            IMessageService messageService,
+            AccessControlService access
     ) {
         this.messageService = messageService;
+        this.access = access;
     }
 
     @Override
     @PostMapping("/conversation/{conversationId}")
+    @PreAuthorize("@access.canAccessConversation(#conversationId)")
     public ResponseEntity<MessageResponse> sendMessage(
             @PathVariable Long conversationId,
             @Valid @RequestBody MessageCreateRequest request
@@ -37,7 +43,7 @@ public class MessageControllerImpl
         Message message =
                 messageService.sendMessage(
                         conversationId,
-                        request.getSenderUserId(),
+                        access.currentUserId(),
                         request.getContent()
                 );
 
@@ -52,6 +58,7 @@ public class MessageControllerImpl
 
     @Override
     @GetMapping("/{messageId}")
+    @PreAuthorize("@access.canAccessMessage(#messageId)")
     public ResponseEntity<MessageResponse> getMessageById(
             @PathVariable Long messageId
     ) {
@@ -70,6 +77,7 @@ public class MessageControllerImpl
 
     @Override
     @GetMapping("/conversation/{conversationId}")
+    @PreAuthorize("@access.canAccessConversation(#conversationId)")
     public ResponseEntity<List<MessageResponse>>
     getMessagesByConversation(
             @PathVariable Long conversationId
@@ -89,17 +97,17 @@ public class MessageControllerImpl
 
     @Override
     @GetMapping("/conversation/{conversationId}/unread")
+    @PreAuthorize("@access.canAccessConversation(#conversationId)")
     public ResponseEntity<List<MessageResponse>>
     getUnreadMessages(
-            @PathVariable Long conversationId,
-            @RequestParam Long readerUserId
+            @PathVariable Long conversationId
     ) {
 
         List<MessageResponse> responses =
                 messageService
                         .getUnreadMessages(
                                 conversationId,
-                                readerUserId
+                                access.currentUserId()
                         )
                         .stream()
                         .map(MessageMapper::toResponse)
@@ -110,23 +118,23 @@ public class MessageControllerImpl
 
     @Override
     @GetMapping("/conversation/{conversationId}/unread-count")
+    @PreAuthorize("@access.canAccessConversation(#conversationId)")
     public ResponseEntity<UnreadMessageCountResponse>
     getUnreadMessageCount(
-            @PathVariable Long conversationId,
-            @RequestParam Long readerUserId
+            @PathVariable Long conversationId
     ) {
 
         long unreadCount =
                 messageService
                         .getUnreadMessageCount(
                                 conversationId,
-                                readerUserId
+                                access.currentUserId()
                         );
 
         UnreadMessageCountResponse response =
                 new UnreadMessageCountResponse(
                         conversationId,
-                        readerUserId,
+                        access.currentUserId(),
                         unreadCount
                 );
 
@@ -135,15 +143,15 @@ public class MessageControllerImpl
 
     @Override
     @PutMapping("/{messageId}/read")
+    @PreAuthorize("@access.canAccessMessage(#messageId)")
     public ResponseEntity<MessageResponse> markMessageAsRead(
-            @PathVariable Long messageId,
-            @RequestParam Long readerUserId
+            @PathVariable Long messageId
     ) {
 
         Message message =
                 messageService.markMessageAsRead(
                         messageId,
-                        readerUserId
+                        access.currentUserId()
                 );
 
         return ResponseEntity.ok(

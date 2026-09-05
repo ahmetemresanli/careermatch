@@ -33,4 +33,6 @@ public interface SkillEndorsementRepository
             Long candidateSkillId,
             String endorserEmail
     );
+
+    boolean existsByCandidateSkillIdAndEndorserUserId(Long candidateSkillId, Long endorserUserId);
 }

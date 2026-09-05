@@ -56,6 +56,10 @@ public class CandidateSkillServiceImpl
                         )
                 );
 
+        if (!skill.isActive()) {
+            throw new BusinessException("Inactive skill cannot be added to a candidate");
+        }
+
         if (candidateSkillRepository
                 .existsByCandidateProfileIdAndSkillId(
                         candidateProfileId,

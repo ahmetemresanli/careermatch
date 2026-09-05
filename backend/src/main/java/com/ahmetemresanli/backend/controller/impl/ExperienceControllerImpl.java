@@ -11,6 +11,7 @@ import com.ahmetemresanli.backend.service.IExperienceService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -36,6 +37,7 @@ public class ExperienceControllerImpl
 
     @Override
     @PostMapping("/candidate/{candidateProfileId}")
+    @PreAuthorize("@access.ownsCandidate(#candidateProfileId)")
     public ResponseEntity<ExperienceResponse> createExperience(
             @PathVariable Long candidateProfileId,
             @Valid @RequestBody ExperienceCreateRequest request
@@ -62,6 +64,7 @@ public class ExperienceControllerImpl
 
     @Override
     @GetMapping("/{id}")
+    @PreAuthorize("@access.ownsExperience(#id) or hasAnyRole('COMPANY','ADMIN')")
     public ResponseEntity<ExperienceResponse> getExperienceById(
             @PathVariable Long id
     ) {
@@ -84,6 +87,7 @@ public class ExperienceControllerImpl
 
     @Override
     @GetMapping("/candidate/{candidateProfileId}")
+    @PreAuthorize("@access.ownsCandidate(#candidateProfileId) or hasAnyRole('COMPANY','ADMIN')")
     public ResponseEntity<List<ExperienceResponse>>
     getExperiencesByCandidate(
             @PathVariable Long candidateProfileId
@@ -116,6 +120,7 @@ public class ExperienceControllerImpl
 
     @Override
     @DeleteMapping("/{id}")
+    @PreAuthorize("@access.ownsExperience(#id)")
     public ResponseEntity<Void> deleteExperience(
             @PathVariable Long id
     ) {

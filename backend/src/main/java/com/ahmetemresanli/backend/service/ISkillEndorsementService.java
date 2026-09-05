@@ -39,4 +39,6 @@ public interface ISkillEndorsementService {
     List<SkillEndorsement> getApprovedEndorsementsByCandidate(
             Long candidateProfileId
     );
+
+    SkillEndorsement endorseDirectly(Long candidateSkillId, Long endorserUserId, ReferenceRelation relation, String comment);
 }

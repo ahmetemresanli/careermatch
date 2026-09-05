@@ -9,6 +9,7 @@ import com.ahmetemresanli.backend.service.IJobSkillService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,6 +29,7 @@ public class JobSkillControllerImpl
 
     @Override
     @PostMapping("/job/{jobPostingId}/skill/{skillId}")
+    @PreAuthorize("@access.managesJob(#jobPostingId)")
     public ResponseEntity<JobSkillResponse>
     addSkillToJobPosting(
             @PathVariable Long jobPostingId,

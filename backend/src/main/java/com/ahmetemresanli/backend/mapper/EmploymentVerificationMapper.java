@@ -52,9 +52,7 @@ public final class EmploymentVerificationMapper {
                 verification.getDocumentUrl()
         );
 
-        response.setToken(
-                verification.getToken()
-        );
+        response.setToken(null);
 
         response.setExpiresAt(
                 verification.getExpiresAt()

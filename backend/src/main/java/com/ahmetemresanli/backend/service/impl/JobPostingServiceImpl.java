@@ -59,6 +59,10 @@ public class JobPostingServiceImpl implements IJobPostingService {
                         )
                 );
 
+        if (!company.isActive()) {
+            throw new BusinessException("Job posting cannot be created for an inactive company");
+        }
+
         if (jobPosting.getTitle() == null
                 || jobPosting.getTitle().isBlank()) {
 

@@ -14,6 +14,11 @@ import com.ahmetemresanli.backend.repository.CandidateProfileRepository;
 import com.ahmetemresanli.backend.repository.JobPostingRepository;
 import com.ahmetemresanli.backend.repository.ResumeRepository;
 import com.ahmetemresanli.backend.service.IApplicationService;
+import com.ahmetemresanli.backend.service.INotificationService;
+import com.ahmetemresanli.backend.service.IAuditLogService;
+import com.ahmetemresanli.backend.enums.NotificationType;
+import com.ahmetemresanli.backend.security.AccessControlService;
+import com.ahmetemresanli.backend.repository.CompanyMemberRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -27,17 +32,29 @@ public class ApplicationServiceImpl
     private final CandidateProfileRepository candidateProfileRepository;
     private final JobPostingRepository jobPostingRepository;
     private final ResumeRepository resumeRepository;
+    private final CompanyMemberRepository companyMemberRepository;
+    private final INotificationService notificationService;
+    private final IAuditLogService auditLogService;
+    private final AccessControlService access;
 
     public ApplicationServiceImpl(
             ApplicationRepository applicationRepository,
             CandidateProfileRepository candidateProfileRepository,
             JobPostingRepository jobPostingRepository,
-            ResumeRepository resumeRepository
+            ResumeRepository resumeRepository,
+            CompanyMemberRepository companyMemberRepository,
+            INotificationService notificationService,
+            IAuditLogService auditLogService,
+            AccessControlService access
     ) {
         this.applicationRepository = applicationRepository;
         this.candidateProfileRepository = candidateProfileRepository;
         this.jobPostingRepository = jobPostingRepository;
         this.resumeRepository = resumeRepository;
+        this.companyMemberRepository = companyMemberRepository;
+        this.notificationService = notificationService;
+        this.auditLogService = auditLogService;
+        this.access = access;
     }
 
     @Override
@@ -164,7 +181,13 @@ public class ApplicationServiceImpl
             );
         }
 
-        return applicationRepository.save(application);
+        Application saved = applicationRepository.save(application);
+        companyMemberRepository.findByCompanyId(jobPosting.getCompany().getId()).stream()
+                .filter(member -> member.isActive() && member.getUser().isActive())
+                .forEach(member -> notificationService.create(member.getUser().getId(), NotificationType.APPLICATION_STATUS,
+                        "New application", candidateProfile.getFirstName() + " applied to " + jobPosting.getTitle(),
+                        "applicationId=" + saved.getId()));
+        return saved;
     }
 
     @Override
@@ -280,7 +303,13 @@ public class ApplicationServiceImpl
 
         application.setStatus(newStatus);
 
-        return applicationRepository.save(application);
+        Application saved = applicationRepository.save(application);
+        notificationService.create(saved.getCandidateProfile().getUser().getId(), NotificationType.APPLICATION_STATUS,
+                "Application status updated", saved.getJobPosting().getTitle() + ": " + newStatus,
+                "applicationId=" + saved.getId());
+        auditLogService.record(access.currentUserId(), "APPLICATION_STATUS_CHANGED", "Application", saved.getId(),
+                currentStatus + " -> " + newStatus);
+        return saved;
     }
 
     private boolean isValidStatusTransition(

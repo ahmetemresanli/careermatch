@@ -6,6 +6,7 @@ import com.ahmetemresanli.backend.entity.Match;
 import com.ahmetemresanli.backend.mapper.MatchMapper;
 import com.ahmetemresanli.backend.service.IMatchService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,6 +27,7 @@ public class MatchControllerImpl implements IMatchController {
     @PostMapping(
             "/candidate/{candidateProfileId}/job/{jobPostingId}"
     )
+    @PreAuthorize("@access.ownsCandidate(#candidateProfileId) or @access.managesJob(#jobPostingId)")
     public ResponseEntity<MatchResponse> calculateMatch(
             @PathVariable Long candidateProfileId,
             @PathVariable Long jobPostingId
@@ -44,6 +46,7 @@ public class MatchControllerImpl implements IMatchController {
 
     @Override
     @GetMapping("/{id}")
+    @PreAuthorize("@access.canAccessMatch(#id)")
     public ResponseEntity<MatchResponse> getMatchById(
             @PathVariable Long id
     ) {
@@ -58,6 +61,7 @@ public class MatchControllerImpl implements IMatchController {
 
     @Override
     @GetMapping("/candidate/{candidateProfileId}")
+    @PreAuthorize("@access.ownsCandidate(#candidateProfileId)")
     public ResponseEntity<List<MatchResponse>> getMatchesByCandidate(
             @PathVariable Long candidateProfileId
     ) {
@@ -76,6 +80,7 @@ public class MatchControllerImpl implements IMatchController {
 
     @Override
     @GetMapping("/job/{jobPostingId}")
+    @PreAuthorize("@access.managesJob(#jobPostingId)")
     public ResponseEntity<List<MatchResponse>> getMatchesByJobPosting(
             @PathVariable Long jobPostingId
     ) {
@@ -96,6 +101,7 @@ public class MatchControllerImpl implements IMatchController {
     @PostMapping(
             "/candidate/{candidateProfileId}/calculate-all"
     )
+    @PreAuthorize("@access.ownsCandidate(#candidateProfileId)")
     public ResponseEntity<List<MatchResponse>>
     calculateMatchesForCandidate(
             @PathVariable Long candidateProfileId
@@ -115,6 +121,7 @@ public class MatchControllerImpl implements IMatchController {
 
     @Override
     @PostMapping("/job/{jobPostingId}/calculate-all")
+    @PreAuthorize("@access.managesJob(#jobPostingId)")
     public ResponseEntity<List<MatchResponse>>
     calculateMatchesForJobPosting(@PathVariable Long jobPostingId) {
 
@@ -132,6 +139,7 @@ public class MatchControllerImpl implements IMatchController {
 
     @Override
     @GetMapping("/candidate/{candidateProfileId}/recommendations")
+    @PreAuthorize("@access.ownsCandidate(#candidateProfileId)")
     public ResponseEntity<List<MatchResponse>> getCandidateRecommendations(
             @PathVariable Long candidateProfileId
     ) {
@@ -148,6 +156,7 @@ public class MatchControllerImpl implements IMatchController {
 
     @Override
     @GetMapping("/job/{jobPostingId}/recommendations")
+    @PreAuthorize("@access.managesJob(#jobPostingId)")
     public ResponseEntity<List<MatchResponse>> getJobPostingRecommendations(
             @PathVariable Long jobPostingId
     ) {

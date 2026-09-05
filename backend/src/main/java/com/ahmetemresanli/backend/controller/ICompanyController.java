@@ -1,6 +1,7 @@
 package com.ahmetemresanli.backend.controller;
 
 import com.ahmetemresanli.backend.dto.request.CompanyCreateRequest;
+import com.ahmetemresanli.backend.dto.request.CompanyUpdateRequest;
 import com.ahmetemresanli.backend.dto.response.CompanyResponse;
 import org.springframework.http.ResponseEntity;
 
@@ -21,4 +22,6 @@ public interface ICompanyController {
     );
 
     ResponseEntity<List<CompanyResponse>> getAllCompanies();
+
+    ResponseEntity<CompanyResponse> updateCompany(Long id, CompanyUpdateRequest request);
 }

@@ -12,6 +12,8 @@ import com.ahmetemresanli.backend.repository.CandidateProfileRepository;
 import com.ahmetemresanli.backend.repository.JobPostingRepository;
 import com.ahmetemresanli.backend.repository.MatchRepository;
 import com.ahmetemresanli.backend.service.IMatchService;
+import com.ahmetemresanli.backend.service.INotificationService;
+import com.ahmetemresanli.backend.enums.NotificationType;
 import com.ahmetemresanli.backend.service.matching.MatchScoreCalculator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,17 +32,20 @@ public class MatchServiceImpl implements IMatchService {
     private final CandidateProfileRepository candidateProfileRepository;
     private final JobPostingRepository jobPostingRepository;
     private final MatchScoreCalculator matchScoreCalculator;
+    private final INotificationService notificationService;
 
     public MatchServiceImpl(
             MatchRepository matchRepository,
             CandidateProfileRepository candidateProfileRepository,
             JobPostingRepository jobPostingRepository,
-            MatchScoreCalculator matchScoreCalculator
+            MatchScoreCalculator matchScoreCalculator,
+            INotificationService notificationService
     ) {
         this.matchRepository = matchRepository;
         this.candidateProfileRepository = candidateProfileRepository;
         this.jobPostingRepository = jobPostingRepository;
         this.matchScoreCalculator = matchScoreCalculator;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -80,19 +85,24 @@ public class MatchServiceImpl implements IMatchService {
                         jobPosting
                 );
 
-        Match match =
-                matchRepository
-                        .findByCandidateProfileIdAndJobPostingId(
+        var existingMatch = matchRepository.findByCandidateProfileIdAndJobPostingId(
                                 candidateProfileId,
                                 jobPostingId
-                        )
+                        );
+        Match match = existingMatch
                         .orElseGet(Match::new);
 
         match.setCandidateProfile(candidateProfile);
         match.setJobPosting(jobPosting);
         match.setScore(score);
 
-        return matchRepository.save(match);
+        Match saved = matchRepository.save(match);
+        if (existingMatch.isEmpty() && score.compareTo(MIN_RECOMMENDATION_SCORE) >= 0) {
+            notificationService.create(candidateProfile.getUser().getId(), NotificationType.JOB_RECOMMENDATION,
+                    "New job recommendation", jobPosting.getTitle() + " matches your profile",
+                    "jobPostingId=" + jobPostingId + ",score=" + score);
+        }
+        return saved;
     }
 
     @Override
@@ -122,7 +132,9 @@ public class MatchServiceImpl implements IMatchService {
         return matchRepository
                 .findByCandidateProfileId(
                         candidateProfileId
-                );
+                ).stream()
+                .filter(match -> match.getJobPosting().getStatus() == JobStatus.PUBLISHED)
+                .toList();
     }
 
     @Override
@@ -141,7 +153,10 @@ public class MatchServiceImpl implements IMatchService {
         return matchRepository
                 .findByJobPostingId(
                         jobPostingId
-                );
+                ).stream()
+                .filter(match -> match.getCandidateProfile().isVisibleToRecruiters())
+                .filter(match -> match.getCandidateProfile().getJobSearchStatus() != JobSearchStatus.NOT_LOOKING)
+                .toList();
     }
 
     @Override

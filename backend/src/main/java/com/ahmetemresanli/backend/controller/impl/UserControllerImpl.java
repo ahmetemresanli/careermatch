@@ -9,6 +9,7 @@ import com.ahmetemresanli.backend.service.IUserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,6 +29,7 @@ public class UserControllerImpl
 
     @Override
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponse> createUser(
             @Valid @RequestBody UserCreateRequest request
     ) {
@@ -48,6 +50,7 @@ public class UserControllerImpl
 
     @Override
     @GetMapping("/{id}")
+    @PreAuthorize("@access.isSelf(#id)")
     public ResponseEntity<UserResponse> getUserById(
             @PathVariable Long id
     ) {
@@ -62,6 +65,7 @@ public class UserControllerImpl
 
     @Override
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserResponse>>
     getAllUsers() {
 

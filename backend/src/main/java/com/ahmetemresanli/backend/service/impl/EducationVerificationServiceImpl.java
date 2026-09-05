@@ -15,7 +15,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
+import com.ahmetemresanli.backend.security.SecureTokenGenerator;
+import com.ahmetemresanli.backend.service.IMailService;
+import com.ahmetemresanli.backend.service.INotificationService;
+import com.ahmetemresanli.backend.enums.NotificationType;
+import org.springframework.beans.factory.annotation.Value;
+import com.ahmetemresanli.backend.service.IAuditLogService;
+import com.ahmetemresanli.backend.security.AccessControlService;
 
 @Service
 public class EducationVerificationServiceImpl
@@ -25,13 +31,28 @@ public class EducationVerificationServiceImpl
 
     private final EducationVerificationRepository verificationRepository;
     private final EducationRepository educationRepository;
+    private final IMailService mailService;
+    private final INotificationService notificationService;
+    private final String publicBaseUrl;
+    private final IAuditLogService auditLogService;
+    private final AccessControlService access;
 
     public EducationVerificationServiceImpl(
             EducationVerificationRepository verificationRepository,
-            EducationRepository educationRepository
+            EducationRepository educationRepository,
+            IMailService mailService,
+            INotificationService notificationService,
+            @Value("${app.public-base-url:http://localhost:8080}") String publicBaseUrl,
+            IAuditLogService auditLogService,
+            AccessControlService access
     ) {
         this.verificationRepository = verificationRepository;
         this.educationRepository = educationRepository;
+        this.mailService = mailService;
+        this.notificationService = notificationService;
+        this.publicBaseUrl = publicBaseUrl;
+        this.auditLogService = auditLogService;
+        this.access = access;
     }
 
     @Override
@@ -77,7 +98,7 @@ public class EducationVerificationServiceImpl
         );
 
         verification.setToken(
-                UUID.randomUUID().toString()
+                SecureTokenGenerator.generate()
         );
 
         verification.setExpiresAt(
@@ -85,9 +106,10 @@ public class EducationVerificationServiceImpl
                         .plusHours(EMAIL_TOKEN_VALID_HOURS)
         );
 
-        return verificationRepository.save(
-                verification
-        );
+        EducationVerification saved = verificationRepository.save(verification);
+        mailService.send(saved.getVerificationEmail(), "CareerMatch education verification",
+                "Verify education: " + publicBaseUrl + "/api/education-verifications/verify-email?token=" + saved.getToken());
+        return saved;
     }
 
     @Override
@@ -123,9 +145,7 @@ public class EducationVerificationServiceImpl
                 VerificationStatus.PENDING
         );
 
-        return verificationRepository.save(
-                verification
-        );
+        return verificationRepository.save(verification);
     }
 
     @Override
@@ -190,9 +210,9 @@ public class EducationVerificationServiceImpl
                 LocalDateTime.now()
         );
 
-        return verificationRepository.save(
-                verification
-        );
+        EducationVerification saved = verificationRepository.save(verification);
+        notifyCandidate(saved, "Education verified", "Your university email verification succeeded");
+        return saved;
     }
 
     @Override
@@ -218,9 +238,12 @@ public class EducationVerificationServiceImpl
 
         verification.setRejectionReason(null);
 
-        return verificationRepository.save(
-                verification
-        );
+        auditLogService.record(access.currentUserId(), "EDUCATION_VERIFICATION_APPROVED", "EducationVerification",
+                verification.getId(), "educationId=" + verification.getEducation().getId());
+
+        EducationVerification saved = verificationRepository.save(verification);
+        notifyCandidate(saved, "Education verified", "Your education document was approved");
+        return saved;
     }
 
     @Override
@@ -253,9 +276,12 @@ public class EducationVerificationServiceImpl
                 rejectionReason.trim()
         );
 
-        return verificationRepository.save(
-                verification
-        );
+        auditLogService.record(access.currentUserId(), "EDUCATION_VERIFICATION_REJECTED", "EducationVerification",
+                verification.getId(), "educationId=" + verification.getEducation().getId());
+
+        EducationVerification saved = verificationRepository.save(verification);
+        notifyCandidate(saved, "Education verification rejected", "Your education document was rejected");
+        return saved;
     }
 
     @Override
@@ -379,7 +405,14 @@ public class EducationVerificationServiceImpl
                 email.substring(atIndex + 1);
 
         return domain.endsWith(".edu.tr")
-                || domain.endsWith(".edu");
+                || domain.endsWith(".edu")
+                || domain.contains(".ac.")
+                || domain.endsWith(".ac");
+    }
+
+    private void notifyCandidate(EducationVerification verification, String title, String message) {
+        notificationService.create(verification.getEducation().getCandidateProfile().getUser().getId(),
+                NotificationType.VERIFICATION, title, message, "educationId=" + verification.getEducation().getId());
     }
 
     @Override

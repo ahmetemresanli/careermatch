@@ -10,6 +10,7 @@ import com.ahmetemresanli.backend.service.IInterviewService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,6 +30,7 @@ public class InterviewControllerImpl
 
     @Override
     @PostMapping("/application/{applicationId}")
+    @PreAuthorize("@access.managesApplication(#applicationId)")
     public ResponseEntity<InterviewResponse>
     createInterview(
             @PathVariable Long applicationId,
@@ -59,6 +61,7 @@ public class InterviewControllerImpl
 
     @Override
     @PutMapping("/{interviewId}/complete")
+    @PreAuthorize("@access.canAccessInterview(#interviewId) and hasAnyRole('COMPANY','ADMIN')")
     public ResponseEntity<InterviewResponse>
     completeInterview(
             @PathVariable Long interviewId,
@@ -81,6 +84,7 @@ public class InterviewControllerImpl
 
     @Override
     @PutMapping("/{interviewId}/cancel")
+    @PreAuthorize("@access.canAccessInterview(#interviewId) and hasAnyRole('COMPANY','ADMIN')")
     public ResponseEntity<InterviewResponse>
     cancelInterview(
             @PathVariable Long interviewId
@@ -100,6 +104,7 @@ public class InterviewControllerImpl
 
     @Override
     @GetMapping("/{interviewId}")
+    @PreAuthorize("@access.canAccessInterview(#interviewId)")
     public ResponseEntity<InterviewResponse>
     getInterviewById(
             @PathVariable Long interviewId
@@ -119,6 +124,7 @@ public class InterviewControllerImpl
 
     @Override
     @GetMapping("/application/{applicationId}")
+    @PreAuthorize("@access.canAccessApplication(#applicationId)")
     public ResponseEntity<List<InterviewResponse>>
     getInterviewsByApplication(
             @PathVariable Long applicationId
@@ -140,6 +146,7 @@ public class InterviewControllerImpl
 
     @Override
     @GetMapping("/candidate/{candidateProfileId}")
+    @PreAuthorize("@access.ownsCandidate(#candidateProfileId)")
     public ResponseEntity<List<InterviewResponse>>
     getInterviewsByCandidate(
             @PathVariable Long candidateProfileId
@@ -161,6 +168,7 @@ public class InterviewControllerImpl
 
     @Override
     @GetMapping("/company/{companyId}")
+    @PreAuthorize("@access.isCompanyMember(#companyId)")
     public ResponseEntity<List<InterviewResponse>>
     getInterviewsByCompany(
             @PathVariable Long companyId

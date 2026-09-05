@@ -16,7 +16,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
+import com.ahmetemresanli.backend.security.SecureTokenGenerator;
+import com.ahmetemresanli.backend.service.IMailService;
+import com.ahmetemresanli.backend.service.INotificationService;
+import com.ahmetemresanli.backend.enums.NotificationType;
+import org.springframework.beans.factory.annotation.Value;
+import com.ahmetemresanli.backend.service.IAuditLogService;
+import com.ahmetemresanli.backend.security.AccessControlService;
 
 @Service
 public class EmploymentVerificationServiceImpl
@@ -31,17 +37,33 @@ public class EmploymentVerificationServiceImpl
                     "outlook.com",
                     "yahoo.com",
                     "icloud.com"
+                    , "live.com", "proton.me", "protonmail.com", "gmx.com", "aol.com"
             );
 
     private final EmploymentVerificationRepository verificationRepository;
     private final ExperienceRepository experienceRepository;
+    private final IMailService mailService;
+    private final INotificationService notificationService;
+    private final String publicBaseUrl;
+    private final IAuditLogService auditLogService;
+    private final AccessControlService access;
 
     public EmploymentVerificationServiceImpl(
             EmploymentVerificationRepository verificationRepository,
-            ExperienceRepository experienceRepository
+            ExperienceRepository experienceRepository,
+            IMailService mailService,
+            INotificationService notificationService,
+            @Value("${app.public-base-url:http://localhost:8080}") String publicBaseUrl,
+            IAuditLogService auditLogService,
+            AccessControlService access
     ) {
         this.verificationRepository = verificationRepository;
         this.experienceRepository = experienceRepository;
+        this.mailService = mailService;
+        this.notificationService = notificationService;
+        this.publicBaseUrl = publicBaseUrl;
+        this.auditLogService = auditLogService;
+        this.access = access;
     }
 
     @Override
@@ -94,7 +116,7 @@ public class EmploymentVerificationServiceImpl
         );
 
         verification.setToken(
-                UUID.randomUUID().toString()
+                SecureTokenGenerator.generate()
         );
 
         verification.setExpiresAt(
@@ -102,9 +124,10 @@ public class EmploymentVerificationServiceImpl
                         .plusHours(EMAIL_TOKEN_VALID_HOURS)
         );
 
-        return verificationRepository.save(
-                verification
-        );
+        EmploymentVerification saved = verificationRepository.save(verification);
+        mailService.send(saved.getVerificationEmail(), "CareerMatch employment verification",
+                "Verify employment: " + publicBaseUrl + "/api/employment-verifications/verify-email?token=" + saved.getToken());
+        return saved;
     }
 
     @Override
@@ -144,9 +167,7 @@ public class EmploymentVerificationServiceImpl
                 VerificationStatus.PENDING
         );
 
-        return verificationRepository.save(
-                verification
-        );
+        return verificationRepository.save(verification);
     }
 
     @Override
@@ -213,9 +234,9 @@ public class EmploymentVerificationServiceImpl
                 LocalDateTime.now()
         );
 
-        return verificationRepository.save(
-                verification
-        );
+        EmploymentVerification saved = verificationRepository.save(verification);
+        notifyCandidate(saved, "Employment verified", "Your work email verification succeeded");
+        return saved;
     }
 
     @Override
@@ -241,9 +262,12 @@ public class EmploymentVerificationServiceImpl
 
         verification.setRejectionReason(null);
 
-        return verificationRepository.save(
-                verification
-        );
+        auditLogService.record(access.currentUserId(), "EMPLOYMENT_VERIFICATION_APPROVED", "EmploymentVerification",
+                verification.getId(), "experienceId=" + verification.getExperience().getId());
+
+        EmploymentVerification saved = verificationRepository.save(verification);
+        notifyCandidate(saved, "Employment verified", "Your employment document was approved");
+        return saved;
     }
 
     @Override
@@ -276,9 +300,12 @@ public class EmploymentVerificationServiceImpl
                 rejectionReason.trim()
         );
 
-        return verificationRepository.save(
-                verification
-        );
+        auditLogService.record(access.currentUserId(), "EMPLOYMENT_VERIFICATION_REJECTED", "EmploymentVerification",
+                verification.getId(), "experienceId=" + verification.getExperience().getId());
+
+        EmploymentVerification saved = verificationRepository.save(verification);
+        notifyCandidate(saved, "Employment verification rejected", "Your employment document was rejected");
+        return saved;
     }
 
     @Override
@@ -445,5 +472,10 @@ public class EmploymentVerificationServiceImpl
         return !FREE_EMAIL_DOMAINS.contains(
                 domain
         );
+    }
+
+    private void notifyCandidate(EmploymentVerification verification, String title, String message) {
+        notificationService.create(verification.getExperience().getCandidateProfile().getUser().getId(),
+                NotificationType.VERIFICATION, title, message, "experienceId=" + verification.getExperience().getId());
     }
 }

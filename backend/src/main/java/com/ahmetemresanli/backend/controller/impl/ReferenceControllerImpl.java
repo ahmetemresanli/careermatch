@@ -13,6 +13,7 @@ import com.ahmetemresanli.backend.service.IReferenceService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,6 +33,7 @@ public class ReferenceControllerImpl
 
     @Override
     @PostMapping("/candidate/{candidateProfileId}/request")
+    @PreAuthorize("@access.ownsCandidate(#candidateProfileId)")
     public ResponseEntity<ReferenceRequestResponse> createReferenceRequest(
             @PathVariable Long candidateProfileId,
             @Valid @RequestBody ReferenceRequestCreateRequest request
@@ -95,6 +97,7 @@ public class ReferenceControllerImpl
 
     @Override
     @GetMapping("/requests/{id}")
+    @PreAuthorize("@access.ownsReferenceRequest(#id)")
     public ResponseEntity<ReferenceRequestResponse> getReferenceRequestById(
             @PathVariable Long id
     ) {
@@ -109,6 +112,7 @@ public class ReferenceControllerImpl
 
     @Override
     @GetMapping("/requests/candidate/{candidateProfileId}")
+    @PreAuthorize("@access.ownsCandidate(#candidateProfileId)")
     public ResponseEntity<List<ReferenceRequestResponse>>
     getReferenceRequestsByCandidate(
             @PathVariable Long candidateProfileId
@@ -128,6 +132,7 @@ public class ReferenceControllerImpl
 
     @Override
     @GetMapping("/{id}")
+    @PreAuthorize("@access.ownsReference(#id) or hasAnyRole('COMPANY','ADMIN')")
     public ResponseEntity<ReferenceResponse> getReferenceById(
             @PathVariable Long id
     ) {
@@ -142,6 +147,7 @@ public class ReferenceControllerImpl
 
     @Override
     @GetMapping("/candidate/{candidateProfileId}")
+    @PreAuthorize("@access.ownsCandidate(#candidateProfileId)")
     public ResponseEntity<List<ReferenceResponse>> getReferencesByCandidate(
             @PathVariable Long candidateProfileId
     ) {
@@ -160,6 +166,7 @@ public class ReferenceControllerImpl
 
     @Override
     @GetMapping("/candidate/{candidateProfileId}/visible")
+    @PreAuthorize("@access.ownsCandidate(#candidateProfileId) or hasAnyRole('COMPANY','ADMIN')")
     public ResponseEntity<List<ReferenceResponse>>
     getVisibleReferencesByCandidate(
             @PathVariable Long candidateProfileId

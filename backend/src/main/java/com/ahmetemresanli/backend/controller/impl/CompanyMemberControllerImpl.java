@@ -9,6 +9,7 @@ import com.ahmetemresanli.backend.service.ICompanyMemberService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,6 +29,7 @@ public class CompanyMemberControllerImpl
 
     @Override
     @PostMapping("/company/{companyId}/user/{userId}")
+    @PreAuthorize("@access.canAdminCompany(#companyId)")
     public ResponseEntity<CompanyMemberResponse> addMember(
             @PathVariable Long userId,
             @PathVariable Long companyId,
@@ -51,6 +53,7 @@ public class CompanyMemberControllerImpl
 
     @Override
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('COMPANY','ADMIN')")
     public ResponseEntity<CompanyMemberResponse>
     getCompanyMemberById(
             @PathVariable Long id
@@ -69,6 +72,7 @@ public class CompanyMemberControllerImpl
 
     @Override
     @GetMapping("/company/{companyId}")
+    @PreAuthorize("@access.isCompanyMember(#companyId)")
     public ResponseEntity<List<CompanyMemberResponse>>
     getMembersByCompanyId(
             @PathVariable Long companyId
@@ -86,6 +90,7 @@ public class CompanyMemberControllerImpl
 
     @Override
     @GetMapping("/user/{userId}")
+    @PreAuthorize("@access.isSelf(#userId)")
     public ResponseEntity<List<CompanyMemberResponse>>
     getMembershipsByUserId(
             @PathVariable Long userId

@@ -1,6 +1,7 @@
 package com.ahmetemresanli.backend.mapper;
 
 import com.ahmetemresanli.backend.dto.request.CompanyCreateRequest;
+import com.ahmetemresanli.backend.dto.request.CompanyUpdateRequest;
 import com.ahmetemresanli.backend.dto.response.CompanyResponse;
 import com.ahmetemresanli.backend.entity.Company;
 
@@ -58,5 +59,17 @@ public final class CompanyMapper {
         response.setUpdatedAt(company.getUpdatedAt());
 
         return response;
+    }
+
+    public static void applyUpdate(Company target, CompanyUpdateRequest request) {
+        if (request.getName() != null) target.setName(request.getName().trim());
+        if (request.getDescription() != null) target.setDescription(request.getDescription());
+        if (request.getIndustry() != null) target.setIndustry(request.getIndustry());
+        if (request.getCity() != null) target.setCity(request.getCity());
+        if (request.getCountry() != null) target.setCountry(request.getCountry());
+        if (request.getWebsiteUrl() != null) target.setWebsiteUrl(request.getWebsiteUrl());
+        if (request.getLogoUrl() != null) target.setLogoUrl(request.getLogoUrl());
+        if (request.getDomain() != null) target.setDomain(request.getDomain());
+        if (request.getEmployeeCount() != null) target.setEmployeeCount(request.getEmployeeCount());
     }
 }

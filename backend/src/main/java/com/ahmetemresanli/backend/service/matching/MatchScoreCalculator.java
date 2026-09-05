@@ -8,6 +8,8 @@ import com.ahmetemresanli.backend.entity.JobSkill;
 import com.ahmetemresanli.backend.enums.SkillLevel;
 import com.ahmetemresanli.backend.enums.WorkModel;
 import com.ahmetemresanli.backend.repository.ExperienceRepository;
+import com.ahmetemresanli.backend.repository.EmploymentVerificationRepository;
+import com.ahmetemresanli.backend.enums.VerificationStatus;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -28,9 +30,12 @@ public class MatchScoreCalculator {
     private static final double LOCATION_WEIGHT = 10.0;
 
     private final ExperienceRepository experienceRepository;
+    private final EmploymentVerificationRepository verificationRepository;
 
-    public MatchScoreCalculator(ExperienceRepository experienceRepository) {
+    public MatchScoreCalculator(ExperienceRepository experienceRepository,
+                                EmploymentVerificationRepository verificationRepository) {
         this.experienceRepository = experienceRepository;
+        this.verificationRepository = verificationRepository;
     }
 
     public BigDecimal calculateScore(
@@ -166,6 +171,16 @@ public class MatchScoreCalculator {
 
         if (experiences.isEmpty()) {
             return 0.0;
+        }
+
+        List<Experience> verifiedExperiences = experiences.stream()
+                .filter(experience -> verificationRepository
+                        .findFirstByExperienceIdAndStatusOrderByCreatedAtDesc(experience.getId(), VerificationStatus.VERIFIED)
+                        .isPresent())
+                .toList();
+        // Eski adayların puanını kökten bozmamak için hiç doğrulama yoksa mevcut davranış korunur.
+        if (!verifiedExperiences.isEmpty()) {
+            experiences = verifiedExperiences;
         }
 
         long totalMonths = 0;

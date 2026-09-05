@@ -11,12 +11,16 @@ import com.ahmetemresanli.backend.repository.CandidateProfileRepository;
 import com.ahmetemresanli.backend.repository.ReferenceRepository;
 import com.ahmetemresanli.backend.repository.ReferenceRequestRepository;
 import com.ahmetemresanli.backend.service.IReferenceService;
+import com.ahmetemresanli.backend.service.IMailService;
+import com.ahmetemresanli.backend.service.INotificationService;
+import com.ahmetemresanli.backend.enums.NotificationType;
+import com.ahmetemresanli.backend.security.SecureTokenGenerator;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class ReferenceServiceImpl
@@ -27,15 +31,24 @@ public class ReferenceServiceImpl
     private final ReferenceRequestRepository referenceRequestRepository;
     private final ReferenceRepository referenceRepository;
     private final CandidateProfileRepository candidateProfileRepository;
+    private final IMailService mailService;
+    private final INotificationService notificationService;
+    private final String publicBaseUrl;
 
     public ReferenceServiceImpl(
             ReferenceRequestRepository referenceRequestRepository,
             ReferenceRepository referenceRepository,
-            CandidateProfileRepository candidateProfileRepository
+            CandidateProfileRepository candidateProfileRepository,
+            IMailService mailService,
+            INotificationService notificationService,
+            @Value("${app.public-base-url:http://localhost:8080}") String publicBaseUrl
     ) {
         this.referenceRequestRepository = referenceRequestRepository;
         this.referenceRepository = referenceRepository;
         this.candidateProfileRepository = candidateProfileRepository;
+        this.mailService = mailService;
+        this.notificationService = notificationService;
+        this.publicBaseUrl = publicBaseUrl;
     }
 
     @Override
@@ -130,7 +143,7 @@ public class ReferenceServiceImpl
                         return;
                     }
 
-                    throw new BusinessException(
+                    throw new com.ahmetemresanli.backend.exception.DuplicateResourceException(
                             "A pending reference request already exists for this email"
                     );
                 });
@@ -164,9 +177,7 @@ public class ReferenceServiceImpl
                 ReferenceRequestStatus.PENDING
         );
 
-        referenceRequest.setToken(
-                UUID.randomUUID().toString()
-        );
+        referenceRequest.setToken(SecureTokenGenerator.generate());
 
         referenceRequest.setExpiresAt(
                 LocalDateTime.now()
@@ -175,9 +186,10 @@ public class ReferenceServiceImpl
                         )
         );
 
-        return referenceRequestRepository.save(
-                referenceRequest
-        );
+        ReferenceRequest saved = referenceRequestRepository.save(referenceRequest);
+        mailService.send(saved.getReferenceEmail(), "CareerMatch reference request",
+                "Respond to the reference request: " + publicBaseUrl + "/api/references/accept?token=" + saved.getToken());
+        return saved;
     }
 
     @Override
@@ -205,7 +217,7 @@ public class ReferenceServiceImpl
                         request.getId()
                 )) {
 
-            throw new BusinessException(
+            throw new com.ahmetemresanli.backend.exception.DuplicateResourceException(
                     "Reference has already been created for this request"
             );
         }
@@ -263,9 +275,10 @@ public class ReferenceServiceImpl
                 request
         );
 
-        return referenceRepository.save(
-                reference
-        );
+        Reference saved = referenceRepository.save(reference);
+        notificationService.create(request.getCandidateProfile().getUser().getId(), NotificationType.REFERENCE_REQUEST,
+                "Reference received", request.getReferenceName() + " submitted a reference", "referenceId=" + saved.getId());
+        return saved;
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.ahmetemresanli.backend.controller;
 
 import com.ahmetemresanli.backend.dto.request.SkillEndorsementAcceptRequest;
 import com.ahmetemresanli.backend.dto.request.SkillEndorsementCreateRequest;
+import com.ahmetemresanli.backend.dto.request.DirectEndorsementRequest;
 import com.ahmetemresanli.backend.dto.response.SkillEndorsementResponse;
 import org.springframework.http.ResponseEntity;
 
@@ -45,4 +46,6 @@ public interface ISkillEndorsementController {
     getApprovedEndorsementsByCandidate(
             Long candidateProfileId
     );
+
+    ResponseEntity<SkillEndorsementResponse> endorseDirectly(Long candidateSkillId, DirectEndorsementRequest request);
 }

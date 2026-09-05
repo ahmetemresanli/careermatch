@@ -11,6 +11,7 @@ import com.ahmetemresanli.backend.service.IEmploymentVerificationService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,6 +31,7 @@ public class EmploymentVerificationControllerImpl
 
     @Override
     @PostMapping("/experience/{experienceId}/email")
+    @PreAuthorize("@access.ownsExperience(#experienceId)")
     public ResponseEntity<EmploymentVerificationResponse>
     requestEmailVerification(
             @PathVariable Long experienceId,
@@ -54,6 +56,7 @@ public class EmploymentVerificationControllerImpl
 
     @Override
     @PostMapping("/experience/{experienceId}/document")
+    @PreAuthorize("@access.ownsExperience(#experienceId)")
     public ResponseEntity<EmploymentVerificationResponse>
     requestDocumentVerification(
             @PathVariable Long experienceId,
@@ -97,6 +100,7 @@ public class EmploymentVerificationControllerImpl
 
     @Override
     @PutMapping("/{verificationId}/approve")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EmploymentVerificationResponse>
     approveDocument(
             @PathVariable Long verificationId
@@ -116,6 +120,7 @@ public class EmploymentVerificationControllerImpl
 
     @Override
     @PutMapping("/{verificationId}/reject")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EmploymentVerificationResponse>
     rejectDocument(
             @PathVariable Long verificationId,
@@ -137,6 +142,7 @@ public class EmploymentVerificationControllerImpl
 
     @Override
     @GetMapping("/{id}")
+    @PreAuthorize("@access.canAccessEmploymentVerification(#id)")
     public ResponseEntity<EmploymentVerificationResponse>
     getVerificationById(
             @PathVariable Long id
@@ -152,6 +158,7 @@ public class EmploymentVerificationControllerImpl
 
     @Override
     @GetMapping("/experience/{experienceId}")
+    @PreAuthorize("@access.ownsExperience(#experienceId) or hasRole('ADMIN')")
     public ResponseEntity<List<EmploymentVerificationResponse>>
     getVerificationsByExperience(
             @PathVariable Long experienceId

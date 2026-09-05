@@ -8,6 +8,7 @@ import com.ahmetemresanli.backend.repository.CandidateProfileRepository;
 import com.ahmetemresanli.backend.repository.ResumeRepository;
 import com.ahmetemresanli.backend.service.IResumeService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -26,6 +27,7 @@ public class ResumeServiceImpl implements IResumeService {
     }
 
     @Override
+    @Transactional
     public Resume createResume(
             Long candidateProfileId,
             Resume resume
@@ -112,6 +114,7 @@ public class ResumeServiceImpl implements IResumeService {
     }
 
     @Override
+    @Transactional
     public Resume setDefaultResume(
             Long candidateProfileId,
             Long resumeId

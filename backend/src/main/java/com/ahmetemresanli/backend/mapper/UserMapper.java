@@ -21,10 +21,7 @@ public final class UserMapper {
 
         user.setEmail(request.getEmail());
 
-        /*
-         * GEÇİCİ:
-         * Security aşamasında BCrypt ile hash'lenecek.
-         */
+        /* Raw password is transient here; UserService encodes it with BCrypt before save. */
         user.setPasswordHash(request.getPassword());
 
         user.setRecoveryEmail(

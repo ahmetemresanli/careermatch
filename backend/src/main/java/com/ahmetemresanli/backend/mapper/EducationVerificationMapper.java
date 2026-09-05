@@ -50,9 +50,7 @@ public final class EducationVerificationMapper {
                 verification.getDocumentUrl()
         );
 
-        response.setToken(
-                verification.getToken()
-        );
+        response.setToken(null);
 
         response.setExpiresAt(
                 verification.getExpiresAt()

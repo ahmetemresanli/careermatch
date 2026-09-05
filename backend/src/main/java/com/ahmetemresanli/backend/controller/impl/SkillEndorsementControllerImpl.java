@@ -3,6 +3,8 @@ package com.ahmetemresanli.backend.controller.impl;
 import com.ahmetemresanli.backend.controller.ISkillEndorsementController;
 import com.ahmetemresanli.backend.dto.request.SkillEndorsementAcceptRequest;
 import com.ahmetemresanli.backend.dto.request.SkillEndorsementCreateRequest;
+import com.ahmetemresanli.backend.dto.request.DirectEndorsementRequest;
+import com.ahmetemresanli.backend.security.AccessControlService;
 import com.ahmetemresanli.backend.dto.response.SkillEndorsementResponse;
 import com.ahmetemresanli.backend.entity.SkillEndorsement;
 import com.ahmetemresanli.backend.mapper.SkillEndorsementMapper;
@@ -10,6 +12,7 @@ import com.ahmetemresanli.backend.service.ISkillEndorsementService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,16 +23,20 @@ public class SkillEndorsementControllerImpl
         implements ISkillEndorsementController {
 
     private final ISkillEndorsementService skillEndorsementService;
+    private final AccessControlService access;
 
     public SkillEndorsementControllerImpl(
-            ISkillEndorsementService skillEndorsementService
+            ISkillEndorsementService skillEndorsementService,
+            AccessControlService access
     ) {
         this.skillEndorsementService =
                 skillEndorsementService;
+        this.access = access;
     }
 
     @Override
     @PostMapping("/candidate-skill/{candidateSkillId}/request")
+    @PreAuthorize("@access.ownsCandidateSkill(#candidateSkillId)")
     public ResponseEntity<SkillEndorsementResponse>
     createEndorsementRequest(
             @PathVariable Long candidateSkillId,
@@ -96,6 +103,7 @@ public class SkillEndorsementControllerImpl
 
     @Override
     @GetMapping("/{id}")
+    @PreAuthorize("@access.ownsEndorsement(#id) or hasAnyRole('COMPANY','ADMIN')")
     public ResponseEntity<SkillEndorsementResponse>
     getEndorsementById(
             @PathVariable Long id
@@ -113,6 +121,7 @@ public class SkillEndorsementControllerImpl
 
     @Override
     @GetMapping("/candidate-skill/{candidateSkillId}")
+    @PreAuthorize("@access.ownsCandidateSkill(#candidateSkillId) or hasAnyRole('COMPANY','ADMIN')")
     public ResponseEntity<List<SkillEndorsementResponse>>
     getEndorsementsByCandidateSkill(
             @PathVariable Long candidateSkillId
@@ -134,6 +143,7 @@ public class SkillEndorsementControllerImpl
 
     @Override
     @GetMapping("/candidate/{candidateProfileId}")
+    @PreAuthorize("@access.ownsCandidate(#candidateProfileId)")
     public ResponseEntity<List<SkillEndorsementResponse>>
     getEndorsementsByCandidate(
             @PathVariable Long candidateProfileId
@@ -155,6 +165,7 @@ public class SkillEndorsementControllerImpl
 
     @Override
     @GetMapping("/candidate/{candidateProfileId}/endorsed")
+    @PreAuthorize("@access.ownsCandidate(#candidateProfileId) or hasAnyRole('COMPANY','ADMIN')")
     public ResponseEntity<List<SkillEndorsementResponse>>
     getApprovedEndorsementsByCandidate(
             @PathVariable Long candidateProfileId
@@ -172,5 +183,14 @@ public class SkillEndorsementControllerImpl
                         .toList();
 
         return ResponseEntity.ok(responses);
+    }
+
+    @Override
+    @PostMapping("/candidate-skill/{candidateSkillId}/endorse-direct")
+    @PreAuthorize("isAuthenticated() and not @access.ownsCandidateSkill(#candidateSkillId)")
+    public ResponseEntity<SkillEndorsementResponse> endorseDirectly(@PathVariable Long candidateSkillId,
+                                                                     @Valid @RequestBody DirectEndorsementRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(SkillEndorsementMapper.toResponse(
+                skillEndorsementService.endorseDirectly(candidateSkillId, access.currentUserId(), request.relation(), request.comment())));
     }
 }

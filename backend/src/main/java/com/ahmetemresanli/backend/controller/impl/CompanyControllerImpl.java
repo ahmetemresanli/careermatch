@@ -2,6 +2,7 @@ package com.ahmetemresanli.backend.controller.impl;
 
 import com.ahmetemresanli.backend.controller.ICompanyController;
 import com.ahmetemresanli.backend.dto.request.CompanyCreateRequest;
+import com.ahmetemresanli.backend.dto.request.CompanyUpdateRequest;
 import com.ahmetemresanli.backend.dto.response.CompanyResponse;
 import com.ahmetemresanli.backend.entity.Company;
 import com.ahmetemresanli.backend.mapper.CompanyMapper;
@@ -9,6 +10,7 @@ import com.ahmetemresanli.backend.service.ICompanyService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,6 +30,7 @@ public class CompanyControllerImpl
 
     @Override
     @PostMapping
+    @PreAuthorize("hasAnyRole('COMPANY','ADMIN')")
     public ResponseEntity<CompanyResponse> createCompany(
             @Valid @RequestBody CompanyCreateRequest request
     ) {
@@ -86,5 +89,15 @@ public class CompanyControllerImpl
                         .toList();
 
         return ResponseEntity.ok(responses);
+    }
+
+    @Override
+    @PutMapping("/{id}")
+    @PreAuthorize("@access.canAdminCompany(#id)")
+    public ResponseEntity<CompanyResponse> updateCompany(@PathVariable Long id,
+                                                          @Valid @RequestBody CompanyUpdateRequest request) {
+        Company company = companyService.getCompanyById(id);
+        CompanyMapper.applyUpdate(company, request);
+        return ResponseEntity.ok(CompanyMapper.toResponse(companyService.updateCompany(id, company)));
     }
 }

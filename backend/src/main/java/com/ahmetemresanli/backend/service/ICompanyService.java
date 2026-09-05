@@ -13,4 +13,6 @@ public interface ICompanyService {
     Company getCompanyByDomain(String domain);
 
     List<Company> getAllCompanies();
+
+    Company updateCompany(Long id, Company company);
 }

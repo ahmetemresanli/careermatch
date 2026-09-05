@@ -7,6 +7,7 @@ import com.ahmetemresanli.backend.mapper.ConversationMapper;
 import com.ahmetemresanli.backend.service.IConversationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,6 +29,7 @@ public class ConversationControllerImpl
     @PostMapping(
             "/candidate/{candidateProfileId}/company/{companyId}"
     )
+    @PreAuthorize("@access.ownsCandidate(#candidateProfileId) or @access.isCompanyMember(#companyId)")
     public ResponseEntity<ConversationResponse> createConversation(
             @PathVariable Long candidateProfileId,
             @PathVariable Long companyId
@@ -50,6 +52,7 @@ public class ConversationControllerImpl
 
     @Override
     @GetMapping("/{conversationId}")
+    @PreAuthorize("@access.canAccessConversation(#conversationId)")
     public ResponseEntity<ConversationResponse> getConversationById(
             @PathVariable Long conversationId
     ) {
@@ -69,6 +72,7 @@ public class ConversationControllerImpl
 
     @Override
     @GetMapping("/candidate/{candidateProfileId}")
+    @PreAuthorize("@access.ownsCandidate(#candidateProfileId)")
     public ResponseEntity<List<ConversationResponse>>
     getConversationsByCandidate(
             @PathVariable Long candidateProfileId
@@ -88,6 +92,7 @@ public class ConversationControllerImpl
 
     @Override
     @GetMapping("/company/{companyId}")
+    @PreAuthorize("@access.isCompanyMember(#companyId)")
     public ResponseEntity<List<ConversationResponse>>
     getConversationsByCompany(
             @PathVariable Long companyId
@@ -107,6 +112,7 @@ public class ConversationControllerImpl
 
     @Override
     @PutMapping("/{conversationId}/deactivate")
+    @PreAuthorize("@access.canAccessConversation(#conversationId)")
     public ResponseEntity<ConversationResponse> deactivateConversation(
             @PathVariable Long conversationId
     ) {

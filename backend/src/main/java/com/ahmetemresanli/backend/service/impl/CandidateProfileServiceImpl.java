@@ -94,4 +94,20 @@ public class CandidateProfileServiceImpl
     public List<CandidateProfile> getAllCandidateProfiles() {
         return candidateProfileRepository.findAll();
     }
+
+    @Override
+    public CandidateProfile updateCandidateProfile(Long id, CandidateProfile changes) {
+        CandidateProfile current = getCandidateProfileById(id);
+        current.setFirstName(changes.getFirstName()); current.setLastName(changes.getLastName());
+        current.setAbout(changes.getAbout()); current.setCity(changes.getCity()); current.setCountry(changes.getCountry());
+        current.setGithubUrl(changes.getGithubUrl()); current.setLinkedinUrl(changes.getLinkedinUrl()); current.setWebsiteUrl(changes.getWebsiteUrl());
+        current.setJobSearchStatus(changes.getJobSearchStatus()); current.setVisibleToRecruiters(changes.isVisibleToRecruiters());
+        current.setExpectedMinSalary(changes.getExpectedMinSalary()); current.setExpectedMaxSalary(changes.getExpectedMaxSalary());
+        current.setPreferredWorkModel(changes.getPreferredWorkModel());
+        if (current.getExpectedMinSalary() != null && current.getExpectedMaxSalary() != null
+                && current.getExpectedMinSalary().compareTo(current.getExpectedMaxSalary()) > 0) {
+            throw new BusinessException("Expected minimum salary cannot be greater than expected maximum salary");
+        }
+        return candidateProfileRepository.save(current);
+    }
 }

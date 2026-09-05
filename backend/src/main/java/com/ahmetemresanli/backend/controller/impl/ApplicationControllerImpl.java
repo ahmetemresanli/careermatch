@@ -11,6 +11,7 @@ import com.ahmetemresanli.backend.service.IApplicationService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,6 +33,7 @@ public class ApplicationControllerImpl
     @PostMapping(
             "/candidate/{candidateProfileId}/job/{jobPostingId}"
     )
+    @PreAuthorize("hasRole('CANDIDATE') and @access.ownsCandidate(#candidateProfileId)")
     public ResponseEntity<ApplicationResponse> applyToJob(
             @PathVariable Long candidateProfileId,
             @PathVariable Long jobPostingId,
@@ -56,6 +58,7 @@ public class ApplicationControllerImpl
 
     @Override
     @GetMapping("/{id}")
+    @PreAuthorize("@access.canAccessApplication(#id)")
     public ResponseEntity<ApplicationResponse>
     getApplicationById(
             @PathVariable Long id
@@ -71,6 +74,7 @@ public class ApplicationControllerImpl
 
     @Override
     @GetMapping("/candidate/{candidateProfileId}")
+    @PreAuthorize("@access.ownsCandidate(#candidateProfileId)")
     public ResponseEntity<List<ApplicationResponse>>
     getApplicationsByCandidateProfileId(
             @PathVariable Long candidateProfileId
@@ -90,6 +94,7 @@ public class ApplicationControllerImpl
 
     @Override
     @GetMapping("/job/{jobPostingId}")
+    @PreAuthorize("@access.managesJob(#jobPostingId)")
     public ResponseEntity<List<ApplicationResponse>>
     getApplicationsByJobPostingId(
             @PathVariable Long jobPostingId
@@ -109,6 +114,7 @@ public class ApplicationControllerImpl
 
     @Override
     @GetMapping("/job/{jobPostingId}/status")
+    @PreAuthorize("@access.managesJob(#jobPostingId)")
     public ResponseEntity<List<ApplicationResponse>>
     getApplicationsByJobPostingIdAndStatus(
             @PathVariable Long jobPostingId,
@@ -130,6 +136,7 @@ public class ApplicationControllerImpl
 
     @Override
     @PutMapping("/{applicationId}/status")
+    @PreAuthorize("@access.managesApplication(#applicationId)")
     public ResponseEntity<ApplicationResponse>
     updateApplicationStatus(
             @PathVariable Long applicationId,

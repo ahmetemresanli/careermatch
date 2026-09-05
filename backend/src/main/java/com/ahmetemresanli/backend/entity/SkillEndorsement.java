@@ -15,7 +15,8 @@ import java.time.LocalDateTime;
                                 "candidate_skill_id",
                                 "endorser_email"
                         }
-                )
+                ),
+                @UniqueConstraint(columnNames = {"candidate_skill_id", "endorser_user_id"})
         }
 )
 public class SkillEndorsement {
@@ -36,6 +37,10 @@ public class SkillEndorsement {
             nullable = false
     )
     private CandidateSkill candidateSkill;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "endorser_user_id")
+    private User endorserUser;
 
     @Column(
             name = "endorser_name",
@@ -131,6 +136,9 @@ public class SkillEndorsement {
     public CandidateSkill getCandidateSkill() {
         return candidateSkill;
     }
+
+    public User getEndorserUser() { return endorserUser; }
+    public void setEndorserUser(User endorserUser) { this.endorserUser = endorserUser; }
 
     public void setCandidateSkill(
             CandidateSkill candidateSkill

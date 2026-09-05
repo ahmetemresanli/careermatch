@@ -9,6 +9,7 @@ import com.ahmetemresanli.backend.service.ICandidateSkillService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,6 +31,7 @@ public class CandidateSkillControllerImpl
     @PostMapping(
             "/candidate/{candidateProfileId}/skill/{skillId}"
     )
+    @PreAuthorize("@access.ownsCandidate(#candidateProfileId)")
     public ResponseEntity<CandidateSkillResponse>
     addSkillToCandidate(
             @PathVariable Long candidateProfileId,
@@ -57,6 +59,7 @@ public class CandidateSkillControllerImpl
 
     @Override
     @GetMapping("/{id}")
+    @PreAuthorize("@access.ownsCandidateSkill(#id) or hasAnyRole('COMPANY','ADMIN')")
     public ResponseEntity<CandidateSkillResponse>
     getCandidateSkillById(
             @PathVariable Long id
@@ -75,6 +78,7 @@ public class CandidateSkillControllerImpl
 
     @Override
     @GetMapping("/candidate/{candidateProfileId}")
+    @PreAuthorize("@access.ownsCandidate(#candidateProfileId) or hasAnyRole('COMPANY','ADMIN')")
     public ResponseEntity<List<CandidateSkillResponse>>
     getSkillsByCandidateProfileId(
             @PathVariable Long candidateProfileId
@@ -94,6 +98,7 @@ public class CandidateSkillControllerImpl
 
     @Override
     @GetMapping("/skill/{skillId}")
+    @PreAuthorize("hasAnyRole('COMPANY','ADMIN')")
     public ResponseEntity<List<CandidateSkillResponse>>
     getCandidatesBySkillId(
             @PathVariable Long skillId

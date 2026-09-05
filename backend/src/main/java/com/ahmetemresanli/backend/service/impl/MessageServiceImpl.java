@@ -10,6 +10,9 @@ import com.ahmetemresanli.backend.repository.ConversationRepository;
 import com.ahmetemresanli.backend.repository.MessageRepository;
 import com.ahmetemresanli.backend.repository.UserRepository;
 import com.ahmetemresanli.backend.service.IMessageService;
+import com.ahmetemresanli.backend.service.INotificationService;
+import com.ahmetemresanli.backend.enums.NotificationType;
+import com.ahmetemresanli.backend.repository.CompanyMemberRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,15 +26,21 @@ public class MessageServiceImpl
     private final MessageRepository messageRepository;
     private final ConversationRepository conversationRepository;
     private final UserRepository userRepository;
+    private final CompanyMemberRepository companyMemberRepository;
+    private final INotificationService notificationService;
 
     public MessageServiceImpl(
             MessageRepository messageRepository,
             ConversationRepository conversationRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            CompanyMemberRepository companyMemberRepository,
+            INotificationService notificationService
     ) {
         this.messageRepository = messageRepository;
         this.conversationRepository = conversationRepository;
         this.userRepository = userRepository;
+        this.companyMemberRepository = companyMemberRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -125,6 +134,18 @@ public class MessageServiceImpl
         conversationRepository.save(
                 conversation
         );
+
+        Long candidateUserId = conversation.getCandidateProfile().getUser().getId();
+        if (!candidateUserId.equals(senderUserId)) {
+            notificationService.create(candidateUserId, NotificationType.MESSAGE, "New message",
+                    "You have a new message from " + conversation.getCompany().getName(),
+                    "conversationId=" + conversationId);
+        } else {
+            companyMemberRepository.findByCompanyId(conversation.getCompany().getId()).stream()
+                    .filter(member -> member.isActive() && !member.getUser().getId().equals(senderUserId))
+                    .forEach(member -> notificationService.create(member.getUser().getId(), NotificationType.MESSAGE,
+                            "New message", "You have a new candidate message", "conversationId=" + conversationId));
+        }
 
         return savedMessage;
     }

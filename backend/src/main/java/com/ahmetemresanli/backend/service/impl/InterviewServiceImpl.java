@@ -13,6 +13,11 @@ import com.ahmetemresanli.backend.repository.CandidateProfileRepository;
 import com.ahmetemresanli.backend.repository.CompanyRepository;
 import com.ahmetemresanli.backend.repository.InterviewRepository;
 import com.ahmetemresanli.backend.service.IInterviewService;
+import com.ahmetemresanli.backend.service.INotificationService;
+import com.ahmetemresanli.backend.service.IMailService;
+import com.ahmetemresanli.backend.service.IAuditLogService;
+import com.ahmetemresanli.backend.enums.NotificationType;
+import com.ahmetemresanli.backend.security.AccessControlService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,17 +32,29 @@ public class InterviewServiceImpl
     private final ApplicationRepository applicationRepository;
     private final CandidateProfileRepository candidateProfileRepository;
     private final CompanyRepository companyRepository;
+    private final INotificationService notificationService;
+    private final IMailService mailService;
+    private final IAuditLogService auditLogService;
+    private final AccessControlService access;
 
     public InterviewServiceImpl(
             InterviewRepository interviewRepository,
             ApplicationRepository applicationRepository,
             CandidateProfileRepository candidateProfileRepository,
-            CompanyRepository companyRepository
+            CompanyRepository companyRepository,
+            INotificationService notificationService,
+            IMailService mailService,
+            IAuditLogService auditLogService,
+            AccessControlService access
     ) {
         this.interviewRepository = interviewRepository;
         this.applicationRepository = applicationRepository;
         this.candidateProfileRepository = candidateProfileRepository;
         this.companyRepository = companyRepository;
+        this.notificationService = notificationService;
+        this.mailService = mailService;
+        this.auditLogService = auditLogService;
+        this.access = access;
     }
 
     @Override
@@ -198,9 +215,15 @@ public class InterviewServiceImpl
             );
         }
 
-        return interviewRepository.save(
-                interview
-        );
+        Interview saved = interviewRepository.save(interview);
+        Long candidateUserId = application.getCandidateProfile().getUser().getId();
+        notificationService.create(candidateUserId, NotificationType.INTERVIEW, "Interview scheduled",
+                application.getJobPosting().getTitle() + " interview: " + scheduledAt, "interviewId=" + saved.getId());
+        mailService.send(application.getCandidateProfile().getUser().getEmail(), "CareerMatch interview scheduled",
+                "Your interview for " + application.getJobPosting().getTitle() + " is scheduled at " + scheduledAt);
+        auditLogService.record(access.currentUserId(), "INTERVIEW_CREATED", "Interview", saved.getId(),
+                "applicationId=" + applicationId);
+        return saved;
     }
 
     @Override
@@ -235,9 +258,10 @@ public class InterviewServiceImpl
                         : feedback.trim()
         );
 
-        return interviewRepository.save(
-                interview
-        );
+        Interview saved = interviewRepository.save(interview);
+        notificationService.create(saved.getApplication().getCandidateProfile().getUser().getId(), NotificationType.INTERVIEW,
+                "Interview completed", "Your interview was marked completed", "interviewId=" + saved.getId());
+        return saved;
     }
 
     @Override
@@ -261,9 +285,10 @@ public class InterviewServiceImpl
                 InterviewStatus.CANCELLED
         );
 
-        return interviewRepository.save(
-                interview
-        );
+        Interview saved = interviewRepository.save(interview);
+        notificationService.create(saved.getApplication().getCandidateProfile().getUser().getId(), NotificationType.INTERVIEW,
+                "Interview cancelled", "Your interview was cancelled", "interviewId=" + saved.getId());
+        return saved;
     }
 
     @Override

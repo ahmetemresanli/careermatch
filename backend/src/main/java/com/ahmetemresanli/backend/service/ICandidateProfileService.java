@@ -16,4 +16,6 @@ public interface ICandidateProfileService {
     CandidateProfile getCandidateProfileByUserId(Long userId);
 
     List<CandidateProfile> getAllCandidateProfiles();
+
+    CandidateProfile updateCandidateProfile(Long id, CandidateProfile candidateProfile);
 }

@@ -11,6 +11,7 @@ import com.ahmetemresanli.backend.service.IEducationVerificationService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -36,6 +37,7 @@ public class EducationControllerImpl
 
     @Override
     @PostMapping("/candidate/{candidateProfileId}")
+    @PreAuthorize("@access.ownsCandidate(#candidateProfileId)")
     public ResponseEntity<EducationResponse> createEducation(
             @PathVariable Long candidateProfileId,
             @Valid @RequestBody EducationCreateRequest request
@@ -66,6 +68,7 @@ public class EducationControllerImpl
 
     @Override
     @GetMapping("/{id}")
+    @PreAuthorize("@access.ownsEducation(#id) or hasAnyRole('COMPANY','ADMIN')")
     public ResponseEntity<EducationResponse> getEducationById(
             @PathVariable Long id
     ) {
@@ -88,6 +91,7 @@ public class EducationControllerImpl
 
     @Override
     @GetMapping("/candidate/{candidateProfileId}")
+    @PreAuthorize("@access.ownsCandidate(#candidateProfileId) or hasAnyRole('COMPANY','ADMIN')")
     public ResponseEntity<List<EducationResponse>>
     getEducationsByCandidate(
             @PathVariable Long candidateProfileId
@@ -120,6 +124,7 @@ public class EducationControllerImpl
 
     @Override
     @DeleteMapping("/{id}")
+    @PreAuthorize("@access.ownsEducation(#id)")
     public ResponseEntity<Void> deleteEducation(
             @PathVariable Long id
     ) {

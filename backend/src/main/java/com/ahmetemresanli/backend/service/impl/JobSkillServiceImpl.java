@@ -55,6 +55,10 @@ public class JobSkillServiceImpl implements IJobSkillService {
                         )
                 );
 
+        if (!skill.isActive()) {
+            throw new BusinessException("Inactive skill cannot be added to a job posting");
+        }
+
         if (jobSkillRepository
                 .existsByJobPostingIdAndSkillId(
                         jobPostingId,

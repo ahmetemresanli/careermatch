@@ -28,4 +28,6 @@ public interface EducationVerificationRepository
     findFirstByEducationIdOrderByCreatedAtDesc(
             Long educationId
     );
+
+    List<EducationVerification> findByStatusOrderByCreatedAtAsc(VerificationStatus status);
 }

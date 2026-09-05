@@ -43,9 +43,7 @@ public final class ReferenceRequestMapper {
                 request.getStatus()
         );
 
-        response.setToken(
-                request.getToken()
-        );
+        response.setToken(null);
 
         response.setExpiresAt(
                 request.getExpiresAt()

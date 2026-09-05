@@ -9,6 +9,7 @@ import com.ahmetemresanli.backend.service.IResumeService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,6 +29,7 @@ public class ResumeControllerImpl
 
     @Override
     @PostMapping("/candidate/{candidateProfileId}")
+    @PreAuthorize("@access.ownsCandidate(#candidateProfileId)")
     public ResponseEntity<ResumeResponse> createResume(
             @PathVariable Long candidateProfileId,
             @Valid @RequestBody ResumeCreateRequest request
@@ -52,6 +54,7 @@ public class ResumeControllerImpl
 
     @Override
     @GetMapping("/{id}")
+    @PreAuthorize("@access.ownsResume(#id)")
     public ResponseEntity<ResumeResponse> getResumeById(
             @PathVariable Long id
     ) {
@@ -66,6 +69,7 @@ public class ResumeControllerImpl
 
     @Override
     @GetMapping("/candidate/{candidateProfileId}")
+    @PreAuthorize("@access.ownsCandidate(#candidateProfileId)")
     public ResponseEntity<List<ResumeResponse>>
     getResumesByCandidateProfileId(
             @PathVariable Long candidateProfileId
@@ -85,6 +89,7 @@ public class ResumeControllerImpl
 
     @Override
     @PutMapping("/{resumeId}/default")
+    @PreAuthorize("@access.ownsCandidate(#candidateProfileId) and @access.ownsResume(#resumeId)")
     public ResponseEntity<ResumeResponse> setDefaultResume(
             @RequestParam Long candidateProfileId,
             @PathVariable Long resumeId
